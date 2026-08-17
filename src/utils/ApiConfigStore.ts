@@ -28,6 +28,5 @@ export const getApiConfig = async () => {
 };
 
 export const clearApiConfig = async () => {
-  // Don't clear if you want to keep it after logout.
-  // await AsyncStorage.multiRemove([API_IP, API_PORT]);
+   await AsyncStorage.removeMany([API_IP, API_PORT]);
 };
