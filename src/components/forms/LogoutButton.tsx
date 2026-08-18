@@ -4,7 +4,8 @@ import React from 'react';
 import { TouchableOpacity, Alert } from 'react-native';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { useNavigation } from '@react-navigation/native';
-import { logout } from '../../utils/Storage';
+import { removeToken } from '../../services/storage/tokenStorage';
+import { removeUser } from '../../services/storage/userStorage';
 
 export default function LogoutButton() {
   const navigation = useNavigation<any>();
@@ -18,7 +19,8 @@ export default function LogoutButton() {
         {
           text: 'Logout',
           onPress: async () => {
-            logout();
+            removeToken();
+            removeUser();
 
             navigation.reset({
               index: 0,

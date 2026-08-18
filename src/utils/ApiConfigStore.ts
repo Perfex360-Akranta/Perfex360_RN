@@ -28,5 +28,5 @@ export const getApiConfig = async () => {
 };
 
 export const clearApiConfig = async () => {
-   await AsyncStorage.removeMany([API_IP, API_PORT]);
+  await AsyncStorage.removeMany([API_IP, API_PORT]);
 };

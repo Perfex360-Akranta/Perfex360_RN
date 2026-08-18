@@ -5,13 +5,6 @@ export interface Column {
 }
 
 
-// export interface ColumnFilter {
-//     columnId:string;
-//     columnName: string;
-//     columnType: string;
-//     condition: string;
-//     value: string;
-// }
 export interface ColumnFilter {
   id: number;
   columnKey: string;

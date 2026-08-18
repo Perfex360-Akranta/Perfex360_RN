@@ -21,5 +21,5 @@ export const logout = async () => {
  // await AsyncStorage.clear();
   await AsyncStorage.removeItem('token');
 await AsyncStorage.removeItem('user');
-//await AsyncStorage.removeItem('role');
+
 };

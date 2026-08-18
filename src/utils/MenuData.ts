@@ -4,7 +4,7 @@ export const menuData = [
   {
     id: '1',
     title: 'Dashboard',
-    screen: 'Dashboard',
+    screen: 'dashboard',
   },
   {
         id: '3',

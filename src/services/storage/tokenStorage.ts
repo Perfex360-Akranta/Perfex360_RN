@@ -1,0 +1,18 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const TOKEN_KEY = '@perfex_token';
+const USER_KEY  = '@perfex_user' ;
+
+export const saveToken = async (
+  token: string,
+): Promise<void> => {
+  await AsyncStorage.setItem(TOKEN_KEY, token);
+};
+
+export const getToken = async (): Promise<string | null> => {
+  return AsyncStorage.getItem(TOKEN_KEY);
+};
+
+export const removeToken = async (): Promise<void> => {
+  await AsyncStorage.removeItem(TOKEN_KEY);
+};

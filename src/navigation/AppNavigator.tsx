@@ -2,38 +2,41 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {DrawerActions} from '@react-navigation/native';
 
-import HomeScreen from '../screens/HomeScreen';
-import AbnormalityFormScreen from '../screens/AbnormalityFormScreen';
-//import DynamicCardScreen from './src/screens/AbnormalityModificationCardScreen';
-import AbnormalityView from '../screens/AbnormalityView';
-import ColumnFilterScreen from '../screens/ColumnFilterScreen';
-import AddColumnFilterScreen from '../screens/AddColumnFilterScreen';
-import { ColumnFilter } from '../types/GridFilters';
-import LoginScreen from '../screens/LoginScreen';
-import AbnormalityCompletion from '../screens/AbnormalityCompletion';
-import AbnormalityAllocation from '../screens/AbnormalityAllocation';
+import HomeScreen from '../screens/home/HomeScreen';
+import AbnormalityFormScreen from '../screens/abnormality/AbnormalityFormScreen';
+import AbnormalityView from '../screens/abnormality/AbnormalityView';
+import ColumnFilterScreen from '../components/grid/ColumnFilterScreen';
+import AddColumnFilterScreen from '../components/grid/AddColumnFilterScreen';
+import LoginScreen from '../screens/login/LoginScreen';
+import AbnormalityCompletion from '../screens/abnormality/AbnormalityCompletion';
+import AbnormalityAllocation from '../screens/abnormality/AbnormalityAllocation';
 import LogoutButton from '../components/forms/LogoutButton';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { Image, TouchableOpacity, View } from 'react-native';
-import MenuScreen from '../screens/MenuScreen';
+import MenuScreen from '../screens/menu/MenuScreen';
+import DashboardScreen from '../screens/dashboard/DashboardScreen';
+import SuggestionFormScreen from '../screens/suggestion/SuggestionFormScreen';
+import SuggestionModification from '../screens/suggestion/SuggestionModification';
+import SuggestionView from '../screens/suggestion/SuggestionView';
 
 export type RootStackParamList = {
   Login:undefined;
   Home: undefined;
   Menu:undefined;
+  dashboard:undefined;
   AbnForm: undefined;
   AbnView: undefined;
   AbnComp: undefined;
   AbnAllocation:undefined;
-  //ColumnFilter:undefined;
-  //AddColumnFilter:undefined;
+
+  Suggestion: { editRecord?: any } | undefined;
+  SuggestionModification: undefined;
+  SuggestionView: undefined;
+
   ColumnFilter: {
     columns: any[];
-    //filters: any[];
     savedFilter:any;
-    //onApply?: (filters: ColumnFilter[]) => void;
   };
-
   AddColumnFilter: {
     columns: any[];
     filter?: any;
@@ -136,6 +139,12 @@ export default function AppNavigator() {
     ),
   })}
       />
+
+      <Stack.Screen
+        name="dashboard"
+        component={DashboardScreen}
+        options={{ title: 'Dashboard' }}
+      />
       <Stack.Screen
         name="AbnForm"
         component={AbnormalityFormScreen}
@@ -157,6 +166,27 @@ export default function AppNavigator() {
         component={AbnormalityCompletion}
         options={{ title: 'Abnormality Completion' }}
       />
+
+
+
+      <Stack.Screen
+        name="Suggestion"
+        component={SuggestionFormScreen}
+        options={{ title: 'Kaizen Suggestion' }}
+      />
+
+      <Stack.Screen
+        name="SuggestionModification"
+        component={SuggestionModification}
+        options={{ title: 'Suggestion Modification' }}
+      />
+
+      <Stack.Screen
+        name="SuggestionView"
+        component={SuggestionView}
+        options={{ title: 'Suggestion View' }}
+      />
+
 
       <Stack.Screen
         name="ColumnFilter"

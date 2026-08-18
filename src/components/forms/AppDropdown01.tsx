@@ -7,7 +7,7 @@ import React, {
 import {View, Text, StyleSheet} from 'react-native';
 
 import {Dropdown} from 'react-native-element-dropdown';
-import {getDropdownData, getDropdownData1} from '../../services/api/dropdownApi';
+import {getDropdownData} from '../../services/api/dropdownApi';
 
 interface DropdownItem {
   label: string;
@@ -25,7 +25,7 @@ interface Props {
   onChange?: (value: string) => void;
 }
 
-const ApiDropdown1 = forwardRef(({
+const ApiDropdown = forwardRef(({
   label,
   manditory,
   dataset,
@@ -40,7 +40,7 @@ const ApiDropdown1 = forwardRef(({
   const loadData = async (params?: any) => {
     try {
       const result =
-        await getDropdownData1(
+        await getDropdownData(
           endpoint,
           params,
         );
@@ -170,4 +170,4 @@ disabledText: {
   },
 });
 
-export default ApiDropdown1;
+export default ApiDropdown;
