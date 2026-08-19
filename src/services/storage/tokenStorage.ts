@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = '@perfex_token';
-const USER_KEY  = '@perfex_user' ;
 
 export const saveToken = async (
   token: string,

@@ -315,10 +315,10 @@ loadFunctionalLocation(value, undefined);
     if(value){
     loadFunctionalLocation(value, undefined);
     cellRef.current?.reload({
-        sectionId: value,
+        sectionid: value,
     });
     machineRef.current?.reload({
-        sectionId: value,
+        sectionid: value,
     });
     }else{
       loadFunctionalLocation(form.pbuId, undefined);
@@ -343,7 +343,7 @@ loadFunctionalLocation(value, undefined);
     }else{
        loadFunctionalLocation(form.sectionId, undefined);
     machineRef.current?.reload({
-        sectionId: form.sectionId,
+        sectionid: form.sectionId,
     });
     }
    

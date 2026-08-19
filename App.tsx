@@ -5,12 +5,16 @@ import {createDrawerNavigator} from '@react-navigation/drawer';
 import AppNavigator from './src/navigation/AppNavigator';
 import { GridProvider } from './src/context/GridProvider';
 //import { enableScreens } from 'react-native-screens';
-import MenuScreen from './src/screens/MenuScreen';
+import MenuScreen from './src/screens/menu/MenuScreen';
 import { getApiConfig } from './src/utils/ApiConfigStore';
 import { useEffect } from 'react';
 import { setApiConfig } from './src/context/ApiConfig';
+import { setupAuthInterceptor } from './src/services/axios/authInterceptor';
 //enableScreens(true);
 const Drawer = createDrawerNavigator();
+
+
+
 function App() {
 useEffect(() => {
     const load = async () => {
@@ -21,6 +25,7 @@ useEffect(() => {
             config.port,
             config.app
         );
+        setupAuthInterceptor();
     };
 
     load();
@@ -48,35 +53,6 @@ useEffect(() => {
   );
 }
 
-// function App() {
-//   const isDarkMode = useColorScheme() === 'dark';
 
-//   return (
-    
-//     <SafeAreaProvider>
-//       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-//       <AppContent />
-//     </SafeAreaProvider>
-//   );
-// }
-
-// function AppContent() {
-//   const safeAreaInsets = useSafeAreaInsets();
-
-//   return (
-//     <View style={styles.container}>
-//       <NewAppScreen
-//         templateFileName="App.tsx"
-//         safeAreaInsets={safeAreaInsets}
-//       />
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//   },
-// });
 
 export default App;

@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { loadDmtDashboard } from '../../services/api/DashboardApi';
+import { loadDmtDashboard } from '../../services/api/dashboardApi';
 
 import AbnormalityClosureChart from '../../components/dashboard/AbnormalityClosureChart';
 import LossTrendChart from '../../components/dashboard/LossTrendChart';
