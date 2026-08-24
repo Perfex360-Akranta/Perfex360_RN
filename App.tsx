@@ -16,6 +16,7 @@ const Drawer = createDrawerNavigator();
 
 
 function App() {
+  
 useEffect(() => {
     const load = async () => {
         const config = await getApiConfig();
