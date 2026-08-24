@@ -1,19 +1,10 @@
-import type {AxiosInstance} from 'axios';
+import { api ,authApi } from '../services/axios/axiosInstance';
 
 let apiIp = '10.224.173.148';
 let apiPort = '9090';
 let apiApp = '';
 
-let apiInstance: AxiosInstance | null = null;
 
-export const registerApiInstance = (instance: AxiosInstance) => {
-  apiInstance = instance;
-
-  // Set the initial URL
-  apiInstance.defaults.baseURL = getApiUrl();
-
-  console.log('Axios initial URL:', apiInstance.defaults.baseURL);
-};
 
 
 export const setApiConfig = (ip: string, port: string, app: string) => {
@@ -25,14 +16,10 @@ export const setApiConfig = (ip: string, port: string, app: string) => {
 
   console.log('API CONFIG UPDATED:', newUrl);
 
-  if (apiInstance) {
-    apiInstance.defaults.baseURL = newUrl;
+  api.defaults.baseURL = newUrl;
+  authApi.defaults.baseURL = newUrl;
 
-    console.log(
-      'Axios baseURL UPDATED:',
-      apiInstance.defaults.baseURL,
-    );
-  }
+
 };
 
 export const getApiUrl = () => {

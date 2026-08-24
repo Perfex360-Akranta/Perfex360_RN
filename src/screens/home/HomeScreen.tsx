@@ -88,6 +88,15 @@ const cards : CardItem[] = [
     colors: ['#d15455', '#fef3ef'],
     screen: 'SuggestionView',
   },
+
+  {
+    title: 'SUGGESTION ACCEPT/REJECT',
+    subtitle: 'Accept or reject pending suggestions',
+    icon: 'fact-check',
+    colors: ['#38e74e', '#e1fbdf'],
+    screen: 'SuggestionAcceptReject',
+  },
+  
   // {
   //   title: 'MULTIPLE',
   //   subtitle: 'Create multiple abnormalities',

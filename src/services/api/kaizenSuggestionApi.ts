@@ -18,3 +18,11 @@ export const getSuggestionById = async (keyid: string) => {
   }
 };
 
+export const updateKaizenWorkflowStatus = async (data: any) => {
+  try {
+    const responseData = await post('kznbnk/update/kznworkflowstatus', data);
+    return responseData;
+  } catch (error) {
+    throw error;
+  }
+};

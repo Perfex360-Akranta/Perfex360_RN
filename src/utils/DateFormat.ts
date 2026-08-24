@@ -7,6 +7,11 @@ export const FUTURE_NULL_DATETIME = '2100-12-31T00:00:00';
 export const PASS_NULL_MONTH = '1801-01';
 export const FUTURE_NULL_MONTH = '2100-12';
 
+const DD_MON_YYYY_MONTHS: Record<string, number> = {
+  JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
+  JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11,
+};
+
 export function toApiDateString(date: Date | string | null | undefined): string {
   if (!date) return '';
 
@@ -59,3 +64,18 @@ export const formatLocalDateTime = (date: Date | null): string | null => {
     `${pad(date.getSeconds())}`
   );
 };
+
+
+export function parseDate(dateStr: string | null | undefined): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+
+  const parts = dateStr.trim().split('-');
+  if (parts.length !== 3) return null;
+
+  const [day, month, year] = parts;
+  const monthIndex = DD_MON_YYYY_MONTHS[month.toUpperCase()];
+  if (monthIndex === undefined) return null;
+
+  const parsed = new Date(Number(year), monthIndex, Number(day));
+  return isNaN(parsed.getTime()) ? null : parsed;
+}

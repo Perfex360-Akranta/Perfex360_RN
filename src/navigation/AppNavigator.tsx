@@ -18,6 +18,7 @@ import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import SuggestionFormScreen from '../screens/suggestion/SuggestionFormScreen';
 import SuggestionModification from '../screens/suggestion/SuggestionModification';
 import SuggestionView from '../screens/suggestion/SuggestionView';
+import SuggestionAcceptReject from '../screens/suggestion/SuggestionAcceptReject';
 
 export type RootStackParamList = {
   Login:undefined;
@@ -32,6 +33,7 @@ export type RootStackParamList = {
   Suggestion: { editRecord?: any } | undefined;
   SuggestionModification: undefined;
   SuggestionView: undefined;
+  SuggestionAcceptReject: undefined;
 
   ColumnFilter: {
     columns: any[];
@@ -61,42 +63,6 @@ export default function AppNavigator() {
             />
           </TouchableOpacity>
         ),
-  //      headerLeft: () => (
-  //   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-  //     {navigation.canGoBack() && (
-  //       <TouchableOpacity
-  //         onPress={() => navigation.goBack()}
-  //         style={{ marginLeft: 5 }}>
-  //         <MaterialIcons
-  //           name="arrow-back"
-  //           size={28}
-  //           color="#1511d3"
-  //         />
-  //       </TouchableOpacity>
-  //     )}
-
-  //     {/* <TouchableOpacity
-  //       onPress={() => navigation.navigate('Menu')}
-  //       style={{ marginLeft: navigation.canGoBack() ? 15 : 5,marginRight: 10 }}>
-  //       <MaterialIcons
-  //         name="menu"
-  //         size={28}
-  //         color="#1511d3"
-  //       />
-  //     </TouchableOpacity> */}
-  //   </View>
-  // ),
-    //    headerLeft: () => (
-    //   <TouchableOpacity
-    //     onPress={() => navigation.navigate('Menu')}>
-    //     <MaterialIcons
-    //       name="menu"
-    //       size={28}
-    //       color="#1511d3"
-    //       style={{marginRight:10,}}
-    //     />
-    //   </TouchableOpacity>
-    // ),
   })}>
     <Stack.Screen
         name="Login"
@@ -185,6 +151,12 @@ export default function AppNavigator() {
         name="SuggestionView"
         component={SuggestionView}
         options={{ title: 'Suggestion View' }}
+      />
+
+       <Stack.Screen
+        name="SuggestionAcceptReject"
+        component={SuggestionAcceptReject}
+        options={{ title: 'Suggestion Accept/Reject' }}
       />
 
 
