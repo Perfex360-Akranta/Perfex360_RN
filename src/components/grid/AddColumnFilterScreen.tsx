@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,15 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-} from 'react-native';
+} from "react-native";
 
-import { Keyboard, InteractionManager } from 'react-native';
+import { Keyboard, InteractionManager } from "react-native";
 
-import { Picker } from '@react-native-picker/picker';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { useGrid } from '../../context/GridProvider';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import { Picker } from "@react-native-picker/picker";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { useGrid } from "../../context/GridProvider";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../navigation/AppNavigator";
 
 interface Column {
   key: string;
@@ -24,7 +24,7 @@ interface Column {
 }
 
 interface ColumnFilter {
-  id:number | null;
+  id: number | null;
   columnKey: string;
   columnName: string;
   columnType: string;
@@ -34,11 +34,10 @@ interface ColumnFilter {
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  'AddColumnFilter'
+  "AddColumnFilter"
 >;
 
 export default function AddColumnFilterScreen() {
-
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp<any>>();
 
@@ -48,20 +47,18 @@ export default function AddColumnFilterScreen() {
   const editFilter: ColumnFilter | null = route.params?.filter || null;
   const onSave = route.params?.onSave;
 
-  const [columnKey, setColumnKey] = useState('');
-  const [columnName, setColumnName] = useState('');
-  const [columnType, setColumnType] = useState('');
+  const [columnKey, setColumnKey] = useState("");
+  const [columnName, setColumnName] = useState("");
+  const [columnType, setColumnType] = useState("");
 
-  const [condition, setCondition] = useState('');
+  const [condition, setCondition] = useState("");
 
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
 
   const [conditions, setConditions] = useState<string[]>([]);
 
   useEffect(() => {
-
     if (editFilter) {
-
       setColumnKey(editFilter.columnKey);
       setColumnName(editFilter.columnName);
       setColumnType(editFilter.columnType);
@@ -70,61 +67,35 @@ export default function AddColumnFilterScreen() {
 
       loadConditions(editFilter.columnType);
     }
-
   }, []);
 
-  
-
   const loadConditions = (type: string) => {
-
     let list: string[] = [];
 
     switch (type) {
-
-      case 'NUMBER':
-
-        list = [
-          '=',
-          '>',
-          '<',
-          '>=',
-          '<=',
-          '!='
-        ];
+      case "NUMBER":
+        list = ["=", ">", "<", ">=", "<=", "!="];
 
         break;
 
-      case 'DATE':
-
-        list = [
-          '=',
-          'Before',
-          'After'
-        ];
+      case "DATE":
+        list = ["=", "Before", "After"];
 
         break;
 
       default:
-
-        list = [
-          'Contains',
-          'Equals',
-          'Starts With',
-          'Ends With'
-        ];
+        list = ["Contains", "Equals", "Starts With", "Ends With"];
     }
 
     setConditions(list);
 
     setCondition(list[0]);
-
   };
 
   const onColumnChanged = (key: string) => {
-
     setColumnKey(key);
 
-    const col = columns.find(x => x.key === key);
+    const col = columns.find((x) => x.key === key);
 
     if (!col) {
       return;
@@ -135,115 +106,72 @@ export default function AddColumnFilterScreen() {
     setColumnType(col.type);
 
     loadConditions(col.type);
-
   };
 
   const saveFilter = () => {
-
     if (!columnKey) {
-
-      Alert.alert('Select Column');
+      Alert.alert("Select Column");
 
       return;
     }
 
     if (!condition) {
-
-      Alert.alert('Select Condition');
+      Alert.alert("Select Condition");
 
       return;
     }
 
     if (!value.trim()) {
-
-      Alert.alert('Enter Value');
+      Alert.alert("Enter Value");
 
       return;
     }
 
-     const newFilter = {
-    id: editFilter?.id ?? Date.now(),
-    columnKey,
-    columnName,
-    columnType,
-    condition,
-    value,
-  };
+    const newFilter = {
+      id: editFilter?.id ?? Date.now(),
+      columnKey,
+      columnName,
+      columnType,
+      condition,
+      value,
+    };
 
-
-
-onSave?.(newFilter);
-//back
-navigation.goBack();
-
+    //save
+    onSave?.(newFilter);
+    //back
+    navigation.goBack();
   };
 
   return (
-
     <ScrollView
       style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 }}>
+      contentContainerStyle={{ paddingBottom: 40 }}
+    >
+      <Text style={styles.title}>Add Column Filter</Text>
 
-      <Text style={styles.title}>
-        Add Column Filter
-      </Text>
-
-      <Text style={styles.label}>
-        Column
-      </Text>
+      <Text style={styles.label}>Column</Text>
 
       <View style={styles.pickerContainer}>
+        <Picker selectedValue={columnKey} onValueChange={onColumnChanged}>
+          <Picker.Item label="Select Column" value="" />
 
-        <Picker
-          selectedValue={columnKey}
-          onValueChange={onColumnChanged}>
-
-          <Picker.Item
-            label="Select Column"
-            value=""
-          />
-
-          {columns.map(col => (
-
-            <Picker.Item
-              key={col.key}
-              label={col.label}
-              value={col.key}
-            />
-
+          {columns.map((col) => (
+            <Picker.Item key={col.key} label={col.label} value={col.key} />
           ))}
-
         </Picker>
-
       </View>
 
-      <Text style={styles.label}>
-        Condition
-      </Text>
+      <Text style={styles.label}>Condition</Text>
 
       <View style={styles.pickerContainer}>
-
-        <Picker
-          selectedValue={condition}
-          onValueChange={setCondition}>
-
-          {conditions.map(item => (
-
-            <Picker.Item
-              key={item}
-              label={item}
-              value={item}
-            />
-
+        <Picker selectedValue={condition} onValueChange={setCondition}>
+          {conditions.map((item) => (
+            <Picker.Item key={item} label={item} value={item} />
           ))}
-
         </Picker>
-
       </View>
 
-      <Text style={styles.label}>
-        Value
-      </Text>
+      <Text style={styles.label}>Value</Text>
 
       <TextInput
         value={value}
@@ -252,91 +180,67 @@ navigation.goBack();
         placeholder="Enter Value"
       />
 
-      <TouchableOpacity
-        style={styles.saveButton}
-        onPress={saveFilter}>
-
-        <Text style={styles.saveText}>
-          Save
-        </Text>
-
+      <TouchableOpacity style={styles.saveButton} onPress={saveFilter}>
+        <Text style={styles.saveText}>Save</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.cancelButton}
-        onPress={() => navigation.goBack()}>
-
-        <Text style={styles.cancelText}>
-          Cancel
-        </Text>
-
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
-
     </ScrollView>
-
   );
-
 }
 
 const styles = StyleSheet.create({
-
   container: {
-
     flex: 1,
 
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
 
     padding: 15,
-
   },
 
   title: {
-
     fontSize: 22,
 
-    fontWeight: 'bold',
+    fontWeight: "bold",
 
     marginBottom: 20,
-
   },
 
   label: {
-
-    fontWeight: '600',
+    fontWeight: "600",
 
     marginTop: 15,
 
     marginBottom: 5,
-
   },
 
   pickerContainer: {
-
     borderWidth: 1,
 
-    borderColor: '#ccc',
+    borderColor: "#ccc",
 
     borderRadius: 5,
-
   },
 
   input: {
-
     borderWidth: 1,
 
-    borderColor: '#ccc',
+    borderColor: "#ccc",
 
     borderRadius: 5,
 
     paddingHorizontal: 10,
 
     height: 45,
-
   },
 
   saveButton: {
-
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
 
     marginTop: 30,
 
@@ -344,40 +248,32 @@ const styles = StyleSheet.create({
 
     borderRadius: 5,
 
-    alignItems: 'center',
-
+    alignItems: "center",
   },
 
   saveText: {
+    color: "#fff",
 
-    color: '#fff',
-
-    fontWeight: 'bold',
+    fontWeight: "bold",
 
     fontSize: 16,
-
   },
 
   cancelButton: {
-
     marginTop: 10,
 
     padding: 14,
 
     borderRadius: 5,
 
-    alignItems: 'center',
+    alignItems: "center",
 
-    backgroundColor: '#999',
-
+    backgroundColor: "#999",
   },
 
   cancelText: {
+    color: "#fff",
 
-    color: '#fff',
-
-    fontWeight: 'bold',
-
+    fontWeight: "bold",
   },
-
 });
