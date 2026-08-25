@@ -170,23 +170,7 @@ export default function AddColumnFilterScreen() {
     value,
   };
 
-//   const list = [...(filter.columnFilters ?? [])];
 
-//   const index = list.findIndex(x => x.id === newFilter.id);
-
-//   if (index >= 0) {
-//     list[index] = newFilter;
-//   } else {
-//     list.push(newFilter);
-//   }
-
-//   setFilter(prev => {
-//   const list = [...(prev.columnFilters ?? [])];
-//   const index = list.findIndex(x => x.id === newFilter.id);
-//   if (index >= 0) list[index] = newFilter;
-//   else list.push(newFilter);
-//   return { ...prev, columnFilters: list };
-// });
 
 onSave?.(newFilter);
 
