@@ -176,50 +176,6 @@ onSave?.(newFilter);
 
 navigation.goBack();
 
-// let navigated = false;
-//   const goBackOnce = () => {
-//     if (navigated) return;
-//     navigated = true;
-//     navigation.goBack();
-//   };
-
-//   const sub = Keyboard.addListener('keyboardDidHide', () => {
-//     sub.remove();
-//     goBackOnce();
-//   });
-
-//   Keyboard.dismiss();
-
-//   // fallback in case keyboard was never open / event doesn't fire
-//   setTimeout(() => {
-//     sub.remove();
-//     goBackOnce();
-//   }, 300);
- //Keyboard.dismiss();
-//  const goBackNow = () => navigation.goBack();
-
-//   if (Keyboard.isVisible?.()) {
-//     const sub = Keyboard.addListener('keyboardDidHide', () => {
-//       sub.remove();
-//       goBackNow();
-//     });
-//     Keyboard.dismiss();
-//   } else {
-//     goBackNow();
-//   }
-
-  // InteractionManager.runAfterInteractions(() => {
-  //   navigation.goBack();
-  // });
-//   setTimeout(() => {
-//   navigation.goBack();
-// }, 100);
-// requestAnimationFrame(() => {
-//     navigation.goBack();
-//   });
-//navigation.goBack();
- 
-
   };
 
   return (
