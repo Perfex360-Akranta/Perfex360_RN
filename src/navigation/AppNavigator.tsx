@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {DrawerActions} from '@react-navigation/native';
+import { DrawerActions } from '@react-navigation/native';
 
 import HomeScreen from '../screens/home/HomeScreen';
 import AbnormalityFormScreen from '../screens/abnormality/AbnormalityFormScreen';
@@ -19,25 +19,29 @@ import SuggestionFormScreen from '../screens/suggestion/SuggestionFormScreen';
 import SuggestionModification from '../screens/suggestion/SuggestionModification';
 import SuggestionView from '../screens/suggestion/SuggestionView';
 import SuggestionAcceptReject from '../screens/suggestion/SuggestionAcceptReject';
+import KaizenIdeaSheetApproval from '../screens/suggestion/KaizenIdeaSheetApproval';
+import WorkflowApprovalListScreen from '../screens/suggestion/WorkflowApprovalListScreen';
 
 export type RootStackParamList = {
-  Login:undefined;
+  Login: undefined;
   Home: undefined;
-  Menu:undefined;
-  dashboard:undefined;
+  Menu: undefined;
+  dashboard: undefined;
   AbnForm: undefined;
   AbnView: undefined;
   AbnComp: undefined;
-  AbnAllocation:undefined;
+  AbnAllocation: undefined;
 
   Suggestion: { editRecord?: any } | undefined;
   SuggestionModification: undefined;
   SuggestionView: undefined;
   SuggestionAcceptReject: undefined;
+  KaizenApproval: undefined;
+  WorkflowApprovalList: { record: any } | undefined;
 
   ColumnFilter: {
     columns: any[];
-    savedFilter:any;
+    savedFilter: any;
   };
   AddColumnFilter: {
     columns: any[];
@@ -51,59 +55,95 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function AppNavigator() {
 
   return (
-    <Stack.Navigator initialRouteName="Login"  screenOptions={({navigation}) => ({
-       headerRight: () => <LogoutButton />,
-         headerLeft: () => (
-          <TouchableOpacity
-            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-            style={{marginLeft: 10}}>
-            <MaterialIcons
-              name="menu"
-              size={28}
-            />
-          </TouchableOpacity>
-        ),
-  })}>
-    <Stack.Screen
+    <Stack.Navigator initialRouteName="Login" screenOptions={({ navigation }) => ({
+      headerRight: () => <LogoutButton />,
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          style={{ marginLeft: 10 }}>
+          <MaterialIcons
+            name="menu"
+            size={28}
+          />
+        </TouchableOpacity>
+      ),
+      //      headerLeft: () => (
+      //   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      //     {navigation.canGoBack() && (
+      //       <TouchableOpacity
+      //         onPress={() => navigation.goBack()}
+      //         style={{ marginLeft: 5 }}>
+      //         <MaterialIcons
+      //           name="arrow-back"
+      //           size={28}
+      //           color="#1511d3"
+      //         />
+      //       </TouchableOpacity>
+      //     )}
+
+      //     {/* <TouchableOpacity
+      //       onPress={() => navigation.navigate('Menu')}
+      //       style={{ marginLeft: navigation.canGoBack() ? 15 : 5,marginRight: 10 }}>
+      //       <MaterialIcons
+      //         name="menu"
+      //         size={28}
+      //         color="#1511d3"
+      //       />
+      //     </TouchableOpacity> */}
+      //   </View>
+      // ),
+      //    headerLeft: () => (
+      //   <TouchableOpacity
+      //     onPress={() => navigation.navigate('Menu')}>
+      //     <MaterialIcons
+      //       name="menu"
+      //       size={28}
+      //       color="#1511d3"
+      //       style={{marginRight:10,}}
+      //     />
+      //   </TouchableOpacity>
+      // ),
+    })}>
+      <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{headerShown:false}}
-    />
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{ 
+        options={{
           headerTitle: () => (
-      <Image
-        source={require('../assets/perfex-logo.png')}
-        style={{
-          width: 200,
-          height: 60,
-          resizeMode: 'contain',
+            <Image
+              source={require('../assets/perfex-logo.png')}
+              style={{
+                width: 200,
+                height: 60,
+                resizeMode: 'contain',
+              }}
+            />
+          ),
+          // title: 'Perfex360'  , 
+          headerRight: () => <LogoutButton />,
         }}
-      />
-    ),
-    // title: 'Perfex360'  , 
-     headerRight: () => <LogoutButton />, 
-    }}
       />
       <Stack.Screen
         name="Menu"
         component={MenuScreen}
         options={({ navigation }) => ({
-    title: 'Menu',
-    headerRight:() => null,
-    headerLeft: () => (
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <MaterialIcons
-          name="arrow-back"
-          size={28}
-          color="#1511d3"
-          style={{marginRight:10,}}
-        />
-      </TouchableOpacity>
-    ),
-  })}
+          title: 'Menu',
+          headerRight: () => null,
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <MaterialIcons
+                name="arrow-back"
+                size={28}
+                color="#1511d3"
+                style={{ marginRight: 10, }}
+              />
+            </TouchableOpacity>
+          ),
+        })}
       />
 
       <Stack.Screen
@@ -153,12 +193,12 @@ export default function AppNavigator() {
         options={{ title: 'Suggestion View' }}
       />
 
-       <Stack.Screen
+
+      <Stack.Screen
         name="SuggestionAcceptReject"
         component={SuggestionAcceptReject}
         options={{ title: 'Suggestion Accept/Reject' }}
       />
-
 
       <Stack.Screen
         name="ColumnFilter"
@@ -171,6 +211,21 @@ export default function AppNavigator() {
         component={AddColumnFilterScreen}
         options={{ title: 'Add Filter' }}
       />
+
+      <Stack.Screen
+        name="KaizenApproval"
+        component={KaizenIdeaSheetApproval}
+        options={{ title: 'Kaizen Approval' }}
+      />
+
+      <Stack.Screen
+        name="WorkflowApprovalList"
+        component={WorkflowApprovalListScreen}
+        options={{ title: 'Workflow Approval' }}
+      />
+
     </Stack.Navigator>
+
+
   );
 }
