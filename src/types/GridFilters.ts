@@ -42,7 +42,7 @@ export interface GridFilterProps {
 
   commonParams?: Record<string, any>;
 
-  footer?: React.ReactNode;
+  footer?: boolean;
 
   onRowPress?: (row: any) => void;
 

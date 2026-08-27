@@ -40,7 +40,7 @@ interface ApiRow {
   procedureName,
   conditionParams = {},
   commonParams = {},
-  footer,
+  footer = true,
   onRowPress,
   isEdit = false,
   onEdit,
@@ -426,7 +426,7 @@ if (rows.length >= 2) {
       windowSize={5}
       removeClippedSubviews
     />
- <Footer  columns={columns} />
+{footer &&  <Footer  columns={columns} /> } 
     </View>
   );
 });
