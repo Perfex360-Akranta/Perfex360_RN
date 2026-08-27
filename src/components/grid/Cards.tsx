@@ -431,7 +431,7 @@ const Cards = forwardRef(({
       windowSize={5}
       removeClippedSubviews
     />
- <Footer  columns={columns} />
+ { footer && <Footer  columns={columns} />  }
     </View>
   );
 });
