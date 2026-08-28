@@ -102,6 +102,20 @@ const cards : CardItem[] = [
       colors: ['#6787d1ff', '#e7ebf3ff'],
       screen: 'KaizenApproval',
     },
+  {
+    title: 'QR CODE SCANNER',
+    subtitle: 'Scan a QR code to fetch ID',
+    icon: 'qr-code-scanner',
+    colors: ['#1A2980', '#26D0CE'],
+    screen: 'QrCodeScanner',
+  },
+  {
+    title: 'QR IDS',
+    subtitle: 'Scan and manage multiple QR IDs',
+    icon: 'list',
+    colors: ['#0F2027', '#2C5364'],
+    screen: 'QrIds',
+  },
   
   // {
   //   title: 'MULTIPLE',

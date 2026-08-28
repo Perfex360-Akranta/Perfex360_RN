@@ -21,6 +21,8 @@ import SuggestionView from '../screens/suggestion/SuggestionView';
 import SuggestionAcceptReject from '../screens/suggestion/SuggestionAcceptReject';
 import KaizenIdeaSheetApproval from '../screens/suggestion/KaizenIdeaSheetApproval';
 import WorkflowApprovalListScreen from '../screens/suggestion/WorkflowApprovalListScreen';
+import QrCodeScannerScreen from '../screens/qrscanner/QrCodeScannerScreen';
+import QrIdsScreen from '../screens/qrscanner/QrIdsScreen';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -38,6 +40,8 @@ export type RootStackParamList = {
   SuggestionAcceptReject: undefined;
   KaizenApproval: undefined;
   WorkflowApprovalList: { record: any } | undefined;
+  QrCodeScanner: { returnTo?: 'QrIds' } | undefined;
+  QrIds: { scannedId?: string } | undefined;
 
   ColumnFilter: {
     columns: any[];
@@ -222,6 +226,18 @@ export default function AppNavigator() {
         name="WorkflowApprovalList"
         component={WorkflowApprovalListScreen}
         options={{ title: 'Workflow Approval' }}
+      />
+
+      <Stack.Screen
+        name="QrCodeScanner"
+        component={QrCodeScannerScreen}
+        options={{ title: 'QR Code Scanner' }}
+      />
+
+      <Stack.Screen
+        name="QrIds"
+        component={QrIdsScreen}
+        options={{ title: 'QR IDs' }}
       />
 
     </Stack.Navigator>
