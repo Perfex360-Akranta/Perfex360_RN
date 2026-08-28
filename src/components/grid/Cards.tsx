@@ -44,6 +44,7 @@ const Cards = forwardRef(({
   onRowPress,
   isEdit = false,
   onEdit,
+  editCondition,
 }: DynamicGridProps, ref) => {
 
 
@@ -282,6 +283,9 @@ const Cards = forwardRef(({
         const cols: Column[] = Object.keys(rows[0])
           .filter(key => {
             const meta = parseMeta(rows[0][key]);
+            if (Object.keys(meta).length === 0) {
+              return false;
+            }
             return meta.HD !== 'T';
           })
           .map(key => {
@@ -319,16 +323,24 @@ const Cards = forwardRef(({
     Object.keys(metaRow).forEach(field => {
       const meta = parseMeta(metaRow[field]);
 
+      if (Object.keys(meta).length === 0) {
+        return;
+      }
+
       if (meta.HD === 'T') {
         return;
       }
 
       if (meta.MT === 'TRUE') {
         mandatoryFields.push(field);
-      } else {
+      } else  {
         moreFields.push(field);
       }
     });
+
+    const showEdit =
+  isEdit &&
+  (editCondition ? editCondition(item) : true);
 
     return (
       <View style={styles.card}>
@@ -360,9 +372,9 @@ const Cards = forwardRef(({
               </Text>
             </View>
           ))}
-        <View style={isEdit ? styles.buttonContainer : ''}>
+        <View style={showEdit ? styles.buttonContainer : ''}>
 
-          {isEdit && (
+          {showEdit && (
             <TouchableOpacity
               onPress={() =>
                 onEdit?.(

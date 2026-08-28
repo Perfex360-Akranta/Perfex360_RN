@@ -53,4 +53,6 @@ export interface GridFilterProps {
         meta: any,
         header: any
     ) => void;
+
+    editCondition?: (item: any) => boolean;
 }

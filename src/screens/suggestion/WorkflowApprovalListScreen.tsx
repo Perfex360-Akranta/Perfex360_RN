@@ -81,6 +81,8 @@ const WorkflowApprovalListScreen: React.FC = () => {
                 isEdit={true}
                 onEdit={handleEdit}
                 ref={cardsRef}
+                footer={false}
+                editCondition={(item) => item.enabl === "Y"}
                 conditionParams={{
 
                     REFID: record.refId,
