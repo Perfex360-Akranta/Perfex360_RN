@@ -16,6 +16,7 @@ import Cards from '../../components/grid/Cards';
 import { useGrid } from '../../context/GridProvider';
 import { updateKaizenWorkflowStatus } from '../../services/api/kaizenSuggestionApi';
 import { parseDate, toApiDateString } from '../../utils/DateFormat';
+import { GridEditProps } from '../../types/GridFilters';
 
 export interface SuggestionEditModel {
   keyid: string;
@@ -289,7 +290,8 @@ const SuggestionAcceptReject: React.FC = () => {
     keyid: '',
   });
 
-  const handleEdit = (row: any, metaRow: any, headerRow: any) => {
+  const handleEdit = (record : GridEditProps) => {
+    const row = record.row;
     setEditData({
       keyid: row.keyid,
       suggestionno: row.suggestionno,

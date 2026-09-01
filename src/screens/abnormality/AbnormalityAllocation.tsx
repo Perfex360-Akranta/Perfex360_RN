@@ -12,6 +12,7 @@ import {
 import Cards from '../../components/grid/Cards';
 import AbnormalityAllocationModel from '../../components/model/AbnormalityAllocationModel';
 import { useGrid } from '../../context/GridProvider';
+import { GridEditProps } from '../../types/GridFilters';
 export interface EditModel {
   keyid: string;
   responsibleid?: string;
@@ -56,12 +57,8 @@ const parseDate = (dateStr: string): Date => {
   return new Date(Number(year), months[month], Number(day));
 };
 
-const handleEdit = (
-  row: any,
-  metaRow: any,
-  headerRow: any
-) => {
-
+const handleEdit = (record : GridEditProps) => {
+ const row = record.row;
 console.log(row);
     let updatedForm = { ...editData };
   setEditData({

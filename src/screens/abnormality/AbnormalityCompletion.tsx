@@ -11,6 +11,7 @@ import {
 import AbnormalityCompletionModel from '../../components/model/AbnomalityComplitionModel';
 import Cards from '../../components/grid/Cards';
 import { useGrid } from '../../context/GridProvider';
+import { GridEditProps } from '../../types/GridFilters';
 export interface EditModel {
   keyid: string;
   countermeasure?: string;
@@ -41,12 +42,8 @@ const [editData, setEditData] = useState<EditModel>({
 
 
 
-const handleEdit = (
-  row: any,
-  metaRow: any,
-  headerRow: any
-) => {
-
+const handleEdit = (record : GridEditProps) => {
+const row = record.row;
 console.log(row);
     let updatedForm = { ...editData };
   setEditData({

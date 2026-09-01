@@ -48,11 +48,16 @@ export interface GridFilterProps {
 
   isEdit? : boolean;
 
-  onEdit?: (
-        row: any,
-        meta: any,
-        header: any
-    ) => void;
+  onEdit?: (record : GridEditProps) => void;
 
     editCondition?: (item: any) => boolean;
+}
+
+export interface GridEditProps {
+   row: any,
+   meta: any,
+   header: any,
+   index:Number,
+   prevRow:any,
+   nextRow:any,
 }

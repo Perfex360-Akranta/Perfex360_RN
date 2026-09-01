@@ -5,6 +5,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Cards from '../../components/grid/Cards';
 import { useGrid } from '../../context/GridProvider';
 import { workFlowGridParams } from '../../types/workflow';
+import { GridEditProps } from '../../types/GridFilters';
 
 const KaizenIdeaSheetApproval: React.FC = () => {
     const { currentUser, currentRole, setFilter } = useGrid();
@@ -54,16 +55,17 @@ const KaizenIdeaSheetApproval: React.FC = () => {
         }
     };
 
-    const handleEdit = (row: any) => {
-        const record: workFlowGridParams = {
+    const handleEdit = (record : GridEditProps) => {
+        const row = record.row;
+        const params: workFlowGridParams = {
             refId: row.imprvno,
             flid: row.flid,
             enable: 'Y',
             refType: 'KZNBTS',
             transCode: getTransCode(row.transcode),
         }
-        console.log('Kaizen approval card edit tapped:', record);
-        navigation.replace('WorkflowApprovalList', { record: record });
+        console.log('Kaizen approval card edit tapped:', params);
+        navigation.replace('WorkflowApprovalList', { record: params });
     };
 
     return (
