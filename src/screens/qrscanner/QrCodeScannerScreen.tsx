@@ -149,25 +149,53 @@ export default function QrCodeScannerScreen({ navigation, route }: any) {
     null,
   );
 
+  // const handleBarcode = useCallback(
+  //   (value: string) => {
+  //     scannedRef.current = true;
+  //     const id = extractIdFromQr(value);
+
+  //     if (returnTo === 'QrIds') {
+  //       navigation.navigate({
+  //         name: 'QrIds',
+  //         params: { scannedId: id },
+  //         merge: true,
+  //       });
+  //       return;
+  //     }
+
+  //     setRawValue(value);
+  //     setScannedId(id);
+  //   },
+  //   [navigation, returnTo],
+  // );
   const handleBarcode = useCallback(
-    (value: string) => {
-      scannedRef.current = true;
-      const id = extractIdFromQr(value);
+  (value: string) => {
+    scannedRef.current = true;
+    const id = extractIdFromQr(value);
 
-      if (returnTo === 'QrIds') {
-        navigation.navigate({
-          name: 'QrIds',
-          params: { scannedId: id },
-          merge: true,
-        });
-        return;
-      }
+    if (returnTo === 'QrIds') {
+      navigation.navigate({
+        name: 'QrIds',
+        params: { scannedId: id },
+        merge: true,
+      });
+      return;
+    }
 
-      setRawValue(value);
-      setScannedId(id);
-    },
-    [navigation, returnTo],
-  );
+    if (returnTo === 'WorkOrderList') {
+      navigation.navigate({
+        name: 'WorkOrderList',
+        params: { equipmentNo: id },
+        merge: true,
+      });
+      return;
+    }
+
+    setRawValue(value);
+    setScannedId(id);
+  },
+  [navigation, returnTo],
+);
 
   const onBarcodeScanned = useCallback(
     (barcodes: Barcode[]) => {

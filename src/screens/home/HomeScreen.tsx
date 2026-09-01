@@ -116,6 +116,13 @@ const cards : CardItem[] = [
     colors: ['#0F2027', '#2C5364'],
     screen: 'QrIds',
   },
+   {
+    title: 'WORK ORDER',
+    subtitle: 'List of Work Orders',
+    icon: 'work-outline',
+    colors: ['#0F2027', '#2C5364'],
+    screen: 'WorkOrderList',
+  },
   
   // {
   //   title: 'MULTIPLE',

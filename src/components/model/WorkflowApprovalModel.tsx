@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,12 +7,18 @@ import {
     TouchableOpacity,
     Modal,
     Alert,
+    Platform,
 } from 'react-native';
+import DatePicker from '../forms/DatePicker';
 
 import AppDropdown from '../forms/AppDropdown';
 import { updateKaizenWorkflowStatus } from '../../services/api/kaizenSuggestionApi';
 import { useGrid } from '../../context/GridProvider';
 import { toApiDateString } from '../../utils/DateFormat';
+
+
+import { saveWorkFlowApproval } from '../../services/api/WorkflowApi';
+import { WorkFlowApprovalSavePayload } from '../../types/workflow';
 
 export interface WorkflowApprovalRow {
     hdnWrinKeyid?: string;
@@ -22,6 +28,7 @@ export interface WorkflowApprovalRow {
     dteWrinDate?: string;
     txtWrinRemarks?: string;
     enableRow?: string | boolean | number;
+    enabl?: string;
     [key: string]: any;
 }
 
@@ -40,6 +47,20 @@ const STATUS_OPTIONS = [
     { label: 'Pending', value: 'P' },
 ];
 
+
+const findField = (obj: any, patterns: string[]): string | undefined => {
+    if (!obj) return undefined;
+    const keys = Object.keys(obj);
+    const key = keys.find(k => {
+        const lower = k.toLowerCase();
+        return patterns.every(p => lower.includes(p));
+    });
+    if (key && obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
+        return obj[key];
+    }
+    return undefined;
+};
+
 const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
     visible = true,
     record,
@@ -47,18 +68,15 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
     onClose,
     onSuccess,
 }) => {
-    const { currentUser } = useGrid();
+    const { currentUser, currentRole } = useGrid();
 
-    const [isEditing, setIsEditing] = useState<boolean>(false);
-    const [saving, setSaving] = useState<boolean>(false);
-    const [status, setStatus] = useState<string>(
-        row?.selWrinStatus ?? row?.STATUS ?? row?.status ?? 'P'
-    );
-    const [remarks, setRemarks] = useState<string>(
-        row?.txtWrinRemarks ?? row?.REMARKS ?? row?.remarks ?? ''
-    );
+    useEffect(() => {
+        console.log('WorkflowApprovalModel row keys:', row ? Object.keys(row) : null);
+        console.log('WorkflowApprovalModel row:', row);
+    }, [row]);
 
     const refId =
+        record?.refId ||
         record?.keyid ||
         record?.KEYID ||
         record?.kznkeyid ||
@@ -80,17 +98,55 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
         '';
 
     const roleName =
-        row?.txtRoleName ?? row?.ROLENAME ?? row?.rolename ?? row?.ROLE_NAME ?? row?.role_name ?? row?.ROLE ?? 'Approver';
+        row?.txtRoleName ??
+        row?.ROLENAME ??
+        row?.rolename ??
+        row?.ROLE_NAME ??
+        row?.role_name ??
+        row?.ROLE ??
+        findField(row, ['role']) ??
+        'Approver';
 
     const empName =
-        row?.txtEmpName ?? row?.EMPNAME ?? row?.empname ?? row?.EMP_NAME ?? row?.emp_name ?? row?.EMPLOYEE_NAME ?? row?.employee_name ?? '-';
+        row?.txtEmpName ??
+        row?.EMPNAME ??
+        row?.empname ??
+        row?.EMP_NAME ??
+        row?.emp_name ??
+        row?.EMPLOYEE_NAME ??
+        row?.employee_name ??
+        findField(row, ['emp', 'name']) ??
+        '-';
+
+    const enabled = (() => {
+        const val =
+            row?.enabl ??
+            row?.ENABL ??
+            row?.enableRow ??
+            row?.ENABLEROW ??
+            row?.ENABLE_ROW ??
+            row?.chkMakeEditable ??
+            row?.enable;
+        return val === true || val === 'Y' || val === 'y' || val === '1' || val === 1 || val === 'TRUE' || val === 'true';
+    })();
+
+    const [isEditing, setIsEditing] = useState<boolean>(enabled);
+    const [saving, setSaving] = useState<boolean>(false);
+
+    const [status, setStatus] = useState<string>(() => {
+        const initial = row?.selWrinStatus ?? row?.STATUS ?? row?.status ?? 'P';
+        return initial === 'P' || !initial ? 'A' : initial;
+    });
+
+    const [remarks, setRemarks] = useState<string>(
+        row?.txtWrinRemarks ?? row?.REMARKS ?? row?.remarks ?? ''
+    );
 
     const dateVal = row?.dteWrinDate ?? row?.DATE ?? row?.date ?? row?.WRINDATE ?? '';
 
-    const enabled = (() => {
-        const val = row?.enableRow ?? row?.ENABLEROW ?? row?.ENABLE_ROW ?? row?.chkMakeEditable ?? row?.enable;
-        return val === true || val === 'Y' || val === 'y' || val === '1' || val === 1 || val === 'TRUE' || val === 'true';
-    })();
+    // Editable approval date — defaults to today, changeable via the picker.
+    const [approvalDate, setApprovalDate] = useState<Date>(new Date());
+
 
     const getStatusBadge = (s?: string) => {
         switch (s?.toUpperCase()) {
@@ -116,25 +172,43 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
         }
     };
 
+    const displayDateText = isEditing ? approvalDate.toLocaleDateString() : formatDateDisplay(dateVal);
+
     const badge = getStatusBadge(status);
 
     const handleSave = async () => {
         try {
             setSaving(true);
-            const payload = {
-                kznKeyId: refId,
-                wfStatus: status,
-                kaizen: kaizenTitle,
-                acrejby: currentUser?.employeeId ?? '',
-                implementCost: record?.implementcost || '0',
-                targetDate: toApiDateString(new Date()),
-                mocRequired: 'N',
-                responsibility: '',
-                verifyRemarks: remarks.trim(),
-                mocitem: '',
+
+            const nowStr = toApiDateString(new Date());
+
+            const payload: WorkFlowApprovalSavePayload = {
+                workFlowInfo: {
+                    keyid: row?.wrin_keyid || undefined,
+                    wrml_keyid: row?.wrml_keyid ?? '',
+                    ref_id: refId,
+                    ref_type: record?.refType ?? '',
+                    role_id: row?.role_keyid ?? currentRole?.roleId ?? '',
+                    status,
+                    employee_id: currentUser?.employeeId ?? '',
+                    date: toApiDateString(approvalDate),
+                    remarks: remarks.trim(),
+                    wrkd_keyid: row?.wrkd_keyid ?? '',
+                    tempfield2: '-',
+                    tempfield3: '-',
+                    tempfield4: '-',
+                    tempfield5: '-',
+                    createdby: currentUser?.employeeId ?? '',
+                    createdon: nowStr,
+                    modifiedon: nowStr,
+                },
+                lastLevel: 'N',
+                nextRoleName: '',
+                nextRoleId: '',
+                nextEmpId: '',
             };
             console.log('Saving workflow approval with payload:', payload);
-            const response = await updateKaizenWorkflowStatus(payload);
+            const response = await saveWorkFlowApproval(payload);
             console.log('Workflow save response:', response);
             Alert.alert('Success', 'Workflow approval updated successfully.');
             setIsEditing(false);
@@ -176,10 +250,21 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
                         <Text style={styles.dataLabel}>Approver:</Text>
                         <Text style={styles.dataValue}>{empName}</Text>
                     </View>
-                    <View style={styles.dataRow}>
-                        <Text style={styles.dataLabel}>Date:</Text>
-                        <Text style={styles.dataValue}>{formatDateDisplay(dateVal)}</Text>
-                    </View>
+
+                    {isEditing ? (
+                        <View style={styles.inputGroup}>
+                            <DatePicker
+                                label="Date"
+                                value={approvalDate}
+                                onChange={(date: Date) => setApprovalDate(date)}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.dataRow}>
+                            <Text style={styles.dataLabel}>Date:</Text>
+                            <Text style={styles.dataValue}>{displayDateText}</Text>
+                        </View>
+                    )}
 
                     {isEditing && (
                         <View style={styles.inputGroup}>
@@ -217,7 +302,7 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
                     <View style={styles.stepCardFooter}>
                         {isEditing ? (
                             <View style={styles.actionRow}>
-                                <TouchableOpacity style={[styles.btn, styles.cancelBtn]} onPress={() => setIsEditing(false)} disabled={saving}>
+                                <TouchableOpacity style={[styles.btn, styles.cancelBtn]} onPress={onClose} disabled={saving}>
                                     <Text style={styles.cancelBtnText}>Cancel</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={[styles.btn, styles.saveBtn, saving && styles.disabledBtn]} onPress={handleSave} disabled={saving}>
