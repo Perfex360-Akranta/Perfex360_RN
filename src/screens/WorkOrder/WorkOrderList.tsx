@@ -322,6 +322,7 @@ import MaterialIcons from '@react-native-vector-icons/material-icons';
 
 import Cards from '../../components/grid/Cards';
 import { useGrid } from '../../context/GridProvider';
+import { GridEditProps } from '../../types/GridFilters';
 
 type WorkOrderListRouteParams = {
   equipmentNo?: string;
@@ -342,7 +343,8 @@ const WorkOrderList: React.FC = () => {
     setMachineName(equipmentNo ?? null);
   }, [equipmentNo]);
 
-  const handleEdit = (row: any, metaRow: any, headerRow: any) => {
+  const handleEdit = (record : GridEditProps) => {
+    const row = record.row;
     console.log('WORK ORDER ROW:', row);
 
     // CHANGED: navigate to the completion screen with the tapped row's
