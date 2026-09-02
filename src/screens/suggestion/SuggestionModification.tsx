@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import Cards from '../../components/grid/Cards';
 import { useGrid } from '../../context/GridProvider';
+import { GridEditProps } from '../../types/GridFilters';
 
 const SuggestionModification: React.FC = ({ navigation }: any) => {
 
@@ -17,11 +18,8 @@ const SuggestionModification: React.FC = ({ navigation }: any) => {
         }, [])
     );
 
-    const handleEdit = (
-        row: any,
-        metaRow: any,
-        headerRow: any
-    ) => {
+    const handleEdit = (record : GridEditProps) => {
+        const row = record.row;
         console.log('Modification row tapped:', row);
 
         navigation.navigate('Suggestion', {

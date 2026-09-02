@@ -21,20 +21,12 @@ import { Column } from '../../types/GridFilters';
 import { useGrid } from '../../context/GridProvider';
 
 
+
 interface ApiRow {
   [key: string]: any;
 }
 
 
-// const DynamicCards: React.FC<DynamicGridWrapperProps> = ({
-//   procedureName,
-//   conditionParams = {},
-//   commonParams = {},
-//   footer,
-//   onRowPress,
-//   isEdit = false,
-//   onEdit,
-// }) => {
 
 const Cards = forwardRef(({
   procedureName,
@@ -66,16 +58,6 @@ const Cards = forwardRef(({
 
   const { filter, setFilter, currentUser, currentRole } = useGrid();
 
-  // const [filter, setFilter] = useState<GridFilterProps>({
-  //     flid : "FNL000000001",
-  //     fromDate: new Date(1801, 0, 1),
-  //   toDate: new Date(2100, 11, 31),
-  //   fromMonth: fromMonth,// new Date(2026, 5, 1), // Jun = 5
-  //   toMonth: toMonth ,// new Date(2026, 6, 1),   // Jul = 6
-  //     monthWise:'Y',
-  //     columnFilters:[],
-  //     conditionParams:conditionParams
-  // });
 
   const formatDate = (date: Date) => {
     const months = [
@@ -143,13 +125,6 @@ const Cards = forwardRef(({
     loadData();
   }, [filter.reload]);
 
-  // useEffect(() => {
-  //   console.log("Footer Mounted");
-
-  //   return () => {
-  //     console.log("Footer Unmounted");
-  //   };
-  // }, []);
 
 
 
@@ -162,7 +137,7 @@ const Cards = forwardRef(({
 
   const parseMeta = (metaStr: string) => {
     const result: any = {};
-    //changes:21-aug
+    
     if (!metaStr || typeof metaStr !== 'string') {
       return result;
     }
@@ -314,11 +289,17 @@ const Cards = forwardRef(({
 
   };
 
-  const CardItem = ({ item }: { item: ApiRow }) => {
+  const CardItem = ({ item , index }: { item: ApiRow , index:number }) => {
     const [expanded, setExpanded] = useState(false);
 
     const mandatoryFields: string[] = [];
     const moreFields: string[] = [];
+
+    const isFirstRow = index === 0;
+    const isLastRow = index === data.length - 1;
+
+    const prevItem = isFirstRow ? null : data[index - 1];
+    const nextItem = isLastRow ? null : data[index + 1];
 
     Object.keys(metaRow).forEach(field => {
       const meta = parseMeta(metaRow[field]);
@@ -377,10 +358,14 @@ const Cards = forwardRef(({
           {showEdit && (
             <TouchableOpacity
               onPress={() =>
-                onEdit?.(
-                  item,
-                  metaRow,
-                  headerRow
+                onEdit?.({ row :item,
+                 meta : metaRow,
+                 header : headerRow,
+                 index : index,
+                 prevRow: prevItem,
+                 nextRow: nextItem
+                }
+                  
                 )
               }
               style={styles.editBtn}>
@@ -402,25 +387,7 @@ const Cards = forwardRef(({
     );
   };
 
-  // const renderCard = ({ item }: { item: ApiRow }) => {
-  //   return (
-  //     <View style={styles.card}>
-  //       {Object.entries(item).map(([key, value]) => (
-  //         <View style={styles.row} key={key}>
-  //           <Text style={styles.label}>
-  //             {key.replace(/_/g, ' ').toUpperCase()}
-  //           </Text>
 
-  //           <Text style={styles.value}>
-  //             {value !== null && value !== undefined
-  //               ? String(value)
-  //               : '-'}
-  //           </Text>
-  //         </View>
-  //       ))}
-  //     </View>
-  //   );
-  // };
 
   if (loading) {
     return (
@@ -435,7 +402,7 @@ const Cards = forwardRef(({
     <FlatList
       data={data}
       //renderItem={renderCard}
-      renderItem={({ item }) => <CardItem item={item} />}
+      renderItem={({ item , index }) => <CardItem item={item} index={index} />}
       keyExtractor={(_, index) => index.toString()}
       contentContainerStyle={styles.listContainer}
       initialNumToRender={10}

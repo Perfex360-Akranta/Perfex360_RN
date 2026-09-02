@@ -6,6 +6,7 @@ import Cards from '../../components/grid/Cards';
 import WorkflowApprovalModel from '../../components/model/WorkflowApprovalModel';
 import { useGrid } from '../../context/GridProvider';
 import { workFlowGridParams } from '../../types/workflow';
+import { GridEditProps } from '../../types/GridFilters';
 
 
 
@@ -44,10 +45,10 @@ const WorkflowApprovalListScreen: React.FC = () => {
     console.log('flid:', record.flid);
     console.log('===================================================');
 
-    const handleEdit = (row: any) => {
-        console.log('Workflow approval card edit tapped:', row);
+    const handleEdit = (record : GridEditProps) => {
+        console.log('Workflow approval card edit tapped:', record.row);
 
-        setSelectedRow(row);
+        setSelectedRow(record.row);
         setShowEditModal(true);
     };
 
