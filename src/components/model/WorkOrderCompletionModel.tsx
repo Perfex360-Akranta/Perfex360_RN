@@ -7,13 +7,20 @@ import {
     TouchableOpacity,
     Modal,
     Alert,
+    ScrollView,
+    Dimensions,
+
 } from 'react-native';
 import DatePicker from '../forms/DatePicker';
 import AppDropdown from '../forms/AppDropdown';
 
-//import { saveWorkOrderCompletion } from '../../services/api/WorkOrderApi';
+
 import { useGrid } from '../../context/GridProvider';
 import { toApiDateString } from '../../utils/DateFormat';
+import { WorkOrderSavePayload } from '../../types/workorder';
+import { saveWorkOrderCompletion } from '../../services/api/WorkOrderApi';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export interface WorkOrderCompletionRow {
     keyid?: string;
@@ -29,23 +36,10 @@ export interface WorkOrderCompletionRow {
 export interface WorkOrderCompletionModelProps {
     visible?: boolean;
     workorderno?: string;
-    row?: WorkOrderCompletionRow;
+    row?: any;
     onClose?: () => void;
     onSuccess?: () => void;
 }
-
-const findField = (obj: any, patterns: string[]): string | undefined => {
-    if (!obj) return undefined;
-    const keys = Object.keys(obj);
-    const key = keys.find(k => {
-        const lower = k.toLowerCase();
-        return patterns.every(p => lower.includes(p));
-    });
-    if (key && obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
-        return obj[key];
-    }
-    return undefined;
-};
 
 const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
     visible = true,
@@ -56,37 +50,63 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
 }) => {
     const { currentUser, currentRole } = useGrid();
 
+    useEffect(() => {
+        console.log('WorkOrderCompletionModel row keys:', row ? Object.keys(row) : null);
+        console.log('WorkOrderCompletionModel row:', row);
+    }, [row]);
 
-    const jobType = row?.jobtype ?? row?.JOBTYPE ?? findField(row, ['job', 'type']) ?? '-';
-    const frequency = row?.frequency ?? row?.FREQUENCY ?? findField(row, ['freq']) ?? '-';
-    const activity = row?.activity ?? row?.ACTIVITY ?? findField(row, ['activity']) ?? '-';
-    const standards = row?.standards ?? row?.STANDARDS ?? findField(row, ['standard']) ?? '-';
-    const plannedDuration = row?.plannedduration ?? row?.PLANNEDDURATION ?? findField(row, ['planned', 'duration']) ?? '-';
+
+    const rowData = row?.row ?? row;
+
+    const jobType = rowData?.txtjobtype ?? '-';
+    const isCbmJobType = jobType === 'CBM';
+    const frequency = rowData?.frequency ?? '-';
+    const activity = rowData?.activity ?? '-';
+    const standards = rowData?.standards && rowData.standards !== '{}' ? rowData.standards : '-';
+    const plannedDuration = rowData?.plannedduration ?? '-';
+
+    const zoneColor = rowData?.colzonecolor ? rowData.colzonecolor : '-';
+    const cbmReading = rowData?.txtcbmreading ? rowData.txtcbmreading : '-';
+    const cbmAction = rowData?.cbmaction ? rowData.cbmaction : '-';
+    const adjustedReading = rowData?.txtcbmadjustedreading ? rowData.txtcbmadjustedreading : '-';
+    const nextDueDate = rowData?.dtecbmnextduedate ? rowData.dtecbmnextduedate : '-';
 
 
     const [status, setStatus] = useState<boolean>(
-        row?.status === true || row?.status === 'Y' || row?.STATUS === 'Y'
+        rowData?.status === 'Y' || rowData?.pwdd_status === 'Y'
     );
 
     const [actualDuration, setActualDuration] = useState<string>(
-        row?.actualduration ?? row?.ACTUALDURATION ?? ''
+        rowData?.txtwofbduration ?? ''
     );
     const [actionTaken, setActionTaken] = useState<string>(
-        row?.actiontaken ?? row?.ACTIONTAKEN ?? ''
+        rowData?.txtwofbaction ?? ''
     );
     const [observation, setObservation] = useState<string>(
-        row?.observation ?? row?.OBSERVATION ?? ''
+        rowData?.txtwofbobservation ?? ''
     );
     const [responsibility, setResponsibility] = useState<string>(
-        row?.responsibility ?? row?.RESPONSIBILITY ?? ''
+        rowData?.hdnobsvresponsibility ?? ''
     );
     const [targetDate, setTargetDate] = useState<Date>(() => {
-        const raw = row?.targetdate ?? row?.TARGETDATE;
+        const raw = rowData?.dteobsvtargetdate;
         const parsed = raw ? new Date(raw) : new Date();
         return isNaN(parsed.getTime()) ? new Date() : parsed;
     });
 
     const [saving, setSaving] = useState<boolean>(false);
+
+    const [cbmReadingValue, setCbmReadingValue] = useState<string>(
+        rowData?.txtcbmreading ?? ''
+    );
+    const [cbmAdjustedReadingValue, setCbmAdjustedReadingValue] = useState<string>(
+        rowData?.txtcbmadjustedreading ?? ''
+    );
+    const [cbmNextDueDateValue, setCbmNextDueDateValue] = useState<Date>(() => {
+        const raw = rowData?.dtecbmnextduedate;
+        const parsed = raw ? new Date(raw) : new Date();
+        return isNaN(parsed.getTime()) ? new Date() : parsed;
+    });
 
 
     useEffect(() => {
@@ -115,27 +135,71 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
             setSaving(true);
 
             const nowStr = toApiDateString(new Date());
+            const SENTINEL_DATE = '1801-01-01T00:00:00';
 
-            const payload = {
-                keyid: row?.keyid ?? '',
-                workorderno: workorderno ?? '',
-                jobtype: row?.jobtype ?? row?.JOBTYPE ?? '',
-                status: status ? 'Y' : 'N',
-                actualduration: actualDuration,
-                actiontaken: actionTaken,
-                observation: observation.trim(),
-                responsibility,
-                targetdate: toApiDateString(targetDate),
-                roleid: currentRole?.roleId ?? '',
-                employeeid: currentUser?.employeeId ?? '',
-                createdby: currentUser?.employeeId ?? '',
-                createdon: nowStr,
-                modifiedon: nowStr,
+            const payload: WorkOrderSavePayload = {
+                feedbackList: [
+                    {
+                        feedback: {
+                            feedbackid: '{}',
+                            wodetailid: rowData?.txtwksmwodetailid ?? '',
+                            feedbackdate: nowStr,
+                            status: status ? 'Y' : 'N',
+                            action: actionTaken,
+                            startdate: SENTINEL_DATE,
+                            enddate: SENTINEL_DATE,
+                            completeddate: SENTINEL_DATE,
+                            duration: actualDuration || '0',
+                            isprodstopped: '-',
+                            prodstartdate: SENTINEL_DATE,
+                            currentreading: '0',
+                            adjustedreading: '0',
+                            uom: '{}',
+                            whywhyflag: '-',
+                            whywhyid: '{}',
+                            amcflag: '-',
+                            amcdetailid: '{}',
+                            spareflag: '-',
+                            sparecost: '0',
+                            manpowercost: '0',
+                            contractorcost: '0',
+                            othercost: '0',
+                            observation: observation.trim(),
+                            feedback: '{}',
+                            completedby: currentUser?.employeeId ?? '',
+                            rescheduleflag: '{}',
+                            reschedulereason: '{}',
+                            nextinspectiondate: SENTINEL_DATE,
+                            remarks: observation.trim() || '{}',
+                            rootcause: '{}',
+                            countermeasure: '{}',
+                            mchcondition: '-',
+                            machinetakeovertime: SENTINEL_DATE,
+                            createdby: currentUser?.employeeId ?? '',
+                            modifiedon: nowStr,
+                            createdon: nowStr,
+                        },                    
+                        obsvResponsibility: responsibility,
+                        obsvTargetDate: toApiDateString(targetDate),
+                        cbmReading: isCbmJobType ? (cbmReadingValue || '0') : null,
+                        cbmNextDueDate: isCbmJobType ? toApiDateString(cbmNextDueDateValue) : SENTINEL_DATE,
+                        cbmMinReading: '0',
+                        cbmMaxReading: '0',
+                        cbmAdjustedReading: isCbmJobType ? (cbmAdjustedReadingValue || '0') : '0',
+                        spareconsumed: null,
+                        sparecostactual: null,
+                    },
+                ],
+                workOrderDetailsLstBean: [
+                    { pmCalendarId: workorderno ?? '' },
+                ],
+                multipleResps: [],
+                pmStdId: null,
             };
 
             console.log('Saving work order completion with payload:', payload);
-            //const response = await saveWorkOrderCompletion(payload);
-            //console.log('Work order completion save response:', response);
+            const response = await saveWorkOrderCompletion(payload);
+            console.log('Work order completion save response:', response);
 
             Alert.alert('Success', 'Work order activity updated successfully.');
             onSuccess?.();
@@ -151,8 +215,8 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
         <View style={styles.cardContainer}>
             <View style={styles.header}>
                 <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle}>Activity Completion</Text>
-                    {activity ? <Text style={styles.headerSubtitle} numberOfLines={1}>{activity}</Text> : null}
+                    <Text style={styles.headerTitle}>Work Order Completion</Text>
+                    {activity !== '-' ? <Text style={styles.headerSubtitle} numberOfLines={1}>{activity}</Text> : null}
                 </View>
                 {onClose && (
                     <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -162,7 +226,12 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
             </View>
 
             <View style={styles.stepCard}>
-                <View style={styles.stepCardBody}>
+                <ScrollView
+                    style={styles.stepCardScroll}
+                    contentContainerStyle={styles.stepCardBody}
+                    showsVerticalScrollIndicator={true}
+                    keyboardShouldPersistTaps="handled"
+                >
                     {/* Read-only context from the previous screen */}
                     <View style={styles.dataRow}>
                         <Text style={styles.dataLabel}>Job Type:</Text>
@@ -186,6 +255,29 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
                         <Text style={styles.dataLabel}>Planned Dur.:</Text>
                         <Text style={styles.dataValue}>{plannedDuration}</Text>
                     </View>
+
+                    <View style={styles.dataRow}>
+                        <Text style={styles.dataLabel}>CBM Action:</Text>
+                        <Text style={styles.dataValue}>{cbmAction}</Text>
+                    </View>
+
+                    {/* CBM read-only view — shown when Status is unchecked, or job type isn't CBM */}
+                    {!(status && isCbmJobType) && (
+                        <>
+                            <View style={styles.dataRow}>
+                                <Text style={styles.dataLabel}>CBM Reading:</Text>
+                                <Text style={styles.dataValue}>{cbmReading}</Text>
+                            </View>
+                            <View style={styles.dataRow}>
+                                <Text style={styles.dataLabel}>Adj. Reading:</Text>
+                                <Text style={styles.dataValue}>{adjustedReading}</Text>
+                            </View>
+                            <View style={styles.dataRow}>
+                                <Text style={styles.dataLabel}>Next Due:</Text>
+                                <Text style={styles.dataValue}>{nextDueDate}</Text>
+                            </View>
+                        </>
+                    )}
 
                     {/* Status checkbox gates the rest of the fields */}
                     <TouchableOpacity
@@ -240,9 +332,8 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
                                 <AppDropdown
                                     label=""
                                     manditory={true}
-                                    dataset={[]}
                                     value={responsibility}
-                                    endpoint="enter the employee dropdown end point"
+                                    endpoint="commonFilter/employee"
                                     onChange={val => setResponsibility(val)}
                                 />
                             </View>
@@ -254,9 +345,46 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
                                     onChange={(date: Date) => setTargetDate(date)}
                                 />
                             </View>
+
+                            {/* CBM-specific editable fields — only shown for CBM job type */}
+                            {isCbmJobType && (
+                                <>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>CBM Reading</Text>
+                                        <TextInput
+                                            style={styles.textInput}
+                                            value={cbmReadingValue}
+                                            keyboardType="numeric"
+                                            placeholder="Enter CBM reading"
+                                            placeholderTextColor="#999999"
+                                            onChangeText={setCbmReadingValue}
+                                        />
+                                    </View>
+
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.inputLabel}>Adjusted Reading</Text>
+                                        <TextInput
+                                            style={styles.textInput}
+                                            value={cbmAdjustedReadingValue}
+                                            keyboardType="numeric"
+                                            placeholder="Enter adjusted reading"
+                                            placeholderTextColor="#999999"
+                                            onChangeText={setCbmAdjustedReadingValue}
+                                        />
+                                    </View>
+
+                                    <View style={styles.inputGroup}>
+                                        <DatePicker
+                                            label="Next Due Date"
+                                            value={cbmNextDueDateValue}
+                                            onChange={(date: Date) => setCbmNextDueDateValue(date)}
+                                        />
+                                    </View>
+                                </>
+                            )}
                         </>
                     )}
-                </View>
+                </ScrollView>
 
                 <View style={styles.stepCardFooter}>
                     <View style={styles.actionRow}>
@@ -291,8 +419,7 @@ const styles = StyleSheet.create({
     headerSubtitle: { fontSize: 12, color: '#E3F2FD', marginTop: 2 },
     closeButton: { padding: 6, borderRadius: 16, backgroundColor: 'rgba(255, 255, 255, 0.2)' },
     closeText: { fontSize: 16, color: '#FFFFFF', fontWeight: 'bold', width: 20, textAlign: 'center' },
-    stepCard: { margin: 14, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
-    stepCardBody: { padding: 12 },
+    stepCard: { margin: 14, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' }, stepCardBody: { padding: 12 }, stepCardScroll: { maxHeight: SCREEN_HEIGHT * 0.55 },
     dataRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
     dataLabel: { width: 100, fontSize: 12, fontWeight: '600', color: '#64748B' },
     dataValue: { flex: 1, fontSize: 13, color: '#1E293B', fontWeight: '500' },

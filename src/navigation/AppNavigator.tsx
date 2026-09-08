@@ -21,10 +21,11 @@ import SuggestionView from '../screens/suggestion/SuggestionView';
 import SuggestionAcceptReject from '../screens/suggestion/SuggestionAcceptReject';
 import KaizenIdeaSheetApproval from '../screens/suggestion/KaizenIdeaSheetApproval';
 import WorkflowApprovalListScreen from '../screens/suggestion/WorkflowApprovalListScreen';
-import QrCodeScannerScreen from '../screens/qrscanner/QrCodeScannerScreen';
-import QrIdsScreen from '../screens/qrscanner/QrIdsScreen';
+//import QrCodeScannerScreen from '../screens/qrscanner/QrCodeScannerScreen';
+//import QrIdsScreen from '../screens/qrscanner/QrIdsScreen';
 import WorkOrderList from '../screens/WorkOrder/WorkOrderList';
 import WorkOrderCompletion from '../screens/WorkOrder/Workordercompletion';
+import EquipmentScanner from '../components/QRscanner/EquipmentScanner';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -42,9 +43,10 @@ export type RootStackParamList = {
   SuggestionAcceptReject: undefined;
   KaizenApproval: undefined;
   WorkflowApprovalList: { record: any } | undefined;
-  QrCodeScanner: { returnTo?: 'QrIds' } | undefined;
-  QrIds: { scannedId?: string } | undefined;
+  //QrCodeScanner: { returnTo?: 'QrIds' } | undefined;
+  //QrIds: { scannedId?: string } | undefined;
   WorkOrderCompletion: { workorderno?: string } | undefined;
+  EquipmentScanner: { returnTo?: 'WorkOrderList' | 'BreakdownEntry' } | undefined;
 
   WorkOrderList: undefined;
 
@@ -233,17 +235,23 @@ export default function AppNavigator() {
         options={{ title: 'Workflow Approval' }}
       />
 
-      <Stack.Screen
+      {/* <Stack.Screen
         name="QrCodeScanner"
         component={QrCodeScannerScreen}
         options={{ title: 'QR Code Scanner' }}
+      /> */}
+
+          <Stack.Screen
+        name="EquipmentScanner"
+        component={EquipmentScanner}
+        options={{ title: 'Equipment Scanner' }}
       />
 
-      <Stack.Screen
+      {/* <Stack.Screen
         name="QrIds"
         component={QrIdsScreen}
         options={{ title: 'QR IDs' }}
-      />
+      /> */}
 
       <Stack.Screen
         name="WorkOrderList"
