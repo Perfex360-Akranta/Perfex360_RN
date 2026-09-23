@@ -51,6 +51,10 @@ export interface GridFilterProps {
   onEdit?: (record : GridEditProps) => void;
 
     editCondition?: (item: any) => boolean;
+
+  rowFilter?: (item: any) => boolean;
+
+  listEmptyText?: string;
 }
 
 export interface GridEditProps {

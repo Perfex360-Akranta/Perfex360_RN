@@ -26,6 +26,11 @@ import WorkflowApprovalListScreen from '../screens/suggestion/WorkflowApprovalLi
 import WorkOrderList from '../screens/WorkOrder/WorkOrderList';
 import WorkOrderCompletion from '../screens/WorkOrder/Workordercompletion';
 import EquipmentScanner from '../components/QRscanner/EquipmentScanner';
+import BreakdownEntry from '../screens/Breakdown/BreakdownEntry';
+import BreakdownAllocation from '../screens/Breakdown/BreakdownAllocation';
+import BreakdownCompletion from '../screens/Breakdown/BreakdownCompletion';
+import GeneralMaintenanceBooking from '../screens/GeneralMaintenance/generalmaintenancebooking';
+import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalmaintenancecompletion';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -47,8 +52,14 @@ export type RootStackParamList = {
   //QrIds: { scannedId?: string } | undefined;
   WorkOrderCompletion: { workorderno?: string } | undefined;
   EquipmentScanner: { returnTo?: 'WorkOrderList' | 'BreakdownEntry' } | undefined;
+  BreakdownEntry: { equipmentNo?: string } | undefined;
+  BreakdownAllocation: { equipmentNo?: string } | undefined;
+  BreakdownCompletion: { equipmentNo?: string } | undefined;
+  GeneralMaintenanceBooking: { equipmentNo?: string } | undefined;
+  GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
 
   WorkOrderList: undefined;
+
 
   ColumnFilter: {
     columns: any[];
@@ -241,7 +252,7 @@ export default function AppNavigator() {
         options={{ title: 'QR Code Scanner' }}
       /> */}
 
-          <Stack.Screen
+      <Stack.Screen
         name="EquipmentScanner"
         component={EquipmentScanner}
         options={{ title: 'Equipment Scanner' }}
@@ -264,6 +275,38 @@ export default function AppNavigator() {
         component={WorkOrderCompletion}
         options={{ title: 'Work Order Completion' }}
       />
+
+      <Stack.Screen
+        name="BreakdownEntry"
+        component={BreakdownEntry}
+        options={{ title: 'Breakdown Entry' }}
+      />
+
+<Stack.Screen
+        name="BreakdownAllocation"
+        component={BreakdownAllocation}
+        options={{ title: 'Breakdown Allocation' }}
+      />
+
+      <Stack.Screen
+        name="BreakdownCompletion"
+        component={BreakdownCompletion}
+        options={{ title: 'Breakdown Completion' }}
+      />
+
+      <Stack.Screen
+        name="GeneralMaintenanceBooking"
+        component={GeneralMaintenanceBooking}
+        options={{ title: 'General Maintenance' }}
+      />
+
+      <Stack.Screen
+        name="GeneralMaintenanceCompletion"
+        component={GeneralMaintenanceCompletion}
+        options={{ title: 'General Maintenance Completion' }}
+      />
+
+
 
     </Stack.Navigator>
 

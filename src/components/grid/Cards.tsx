@@ -137,7 +137,7 @@ const Cards = forwardRef(({
 
   const parseMeta = (metaStr: string) => {
     const result: any = {};
-    
+
     if (!metaStr || typeof metaStr !== 'string') {
       return result;
     }
@@ -289,7 +289,7 @@ const Cards = forwardRef(({
 
   };
 
-  const CardItem = ({ item , index }: { item: ApiRow , index:number }) => {
+  const CardItem = ({ item, index }: { item: ApiRow, index: number }) => {
     const [expanded, setExpanded] = useState(false);
 
     const mandatoryFields: string[] = [];
@@ -314,14 +314,14 @@ const Cards = forwardRef(({
 
       if (meta.MT === 'TRUE') {
         mandatoryFields.push(field);
-      } else  {
+      } else {
         moreFields.push(field);
       }
     });
 
     const showEdit =
-  isEdit &&
-  (editCondition ? editCondition(item) : true);
+      isEdit &&
+      (editCondition ? editCondition(item) : true);
 
     return (
       <View style={styles.card}>
@@ -358,14 +358,15 @@ const Cards = forwardRef(({
           {showEdit && (
             <TouchableOpacity
               onPress={() =>
-                onEdit?.({ row :item,
-                 meta : metaRow,
-                 header : headerRow,
-                 index : index,
-                 prevRow: prevItem,
-                 nextRow: nextItem
+                onEdit?.({
+                  row: item,
+                  meta: metaRow,
+                  header: headerRow,
+                  index: index,
+                  prevRow: prevItem,
+                  nextRow: nextItem
                 }
-                  
+
                 )
               }
               style={styles.editBtn}>
@@ -399,18 +400,18 @@ const Cards = forwardRef(({
 
   return (
     <View style={{ flex: 1 }}>
-    <FlatList
-      data={data}
-      //renderItem={renderCard}
-      renderItem={({ item , index }) => <CardItem item={item} index={index} />}
-      keyExtractor={(_, index) => index.toString()}
-      contentContainerStyle={styles.listContainer}
-      initialNumToRender={10}
-      maxToRenderPerBatch={10}
-      windowSize={5}
-      removeClippedSubviews
-    />
- { footer && <Footer  columns={columns} />  }
+      <FlatList
+        data={data}
+        //renderItem={renderCard}
+        renderItem={({ item, index }) => <CardItem item={item} index={index} />}
+        keyExtractor={(_, index) => index.toString()}
+        contentContainerStyle={styles.listContainer}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews
+      />
+      {footer && <Footer columns={columns} />}
     </View>
   );
 });
