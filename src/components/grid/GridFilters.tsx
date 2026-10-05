@@ -92,7 +92,7 @@ const loadFunctionalLocation = async (
 
 useEffect(() => {
   if (form.flid) {
-    loadFunctionalLocation(undefined, filter.flid);
+    //loadFunctionalLocation(undefined, form.flid);
   }
   if(form.monthWise){
     if(form.monthWise == 'Y'){
@@ -186,6 +186,8 @@ updatedForm = {
 const FunctionalLocation_SuccessCallback = (
     result: any
   ) => {
+
+     console.log("FUN_SUCCESS_RESULT:"+result);
     setForm(prev => ({
           ...prev,
           companyId: result.companyId ?? '',
@@ -276,18 +278,12 @@ const toDate = new Date(
 
       <View style={styles.overlay}>
         <View style={styles.container}>
-{/* <TouchableOpacity
-  style={styles.closeButton}
-  onPress={onClose}
->
-  <Text style={styles.closeText}>✕</Text>
-</TouchableOpacity> */}
+
 
 <TouchableOpacity
   style={styles.closeBtn}
   onPress={onClose}
 >
-  {/* <Text style={styles.closeText}>✕</Text> */}
   <MaterialIcons name="close" size={24} color="white"/>
 </TouchableOpacity>
         
@@ -358,14 +354,7 @@ const toDate = new Date(
             <TouchableOpacity
               style={styles.button}
               onPress={() => {
-              //   if(onSelect){
-              //     onSelect(form.flid);
-              //   }
-              //  if(onClose){
-              //   onClose();
-              //  }
-              GridFilter_onSubmit();
-                
+              GridFilter_onSubmit();  
               }}
             >
               <Text>View</Text>
@@ -377,12 +366,6 @@ const toDate = new Date(
             >
               <Text>Close</Text>
             </TouchableOpacity>
-             {/* <TouchableOpacity
-              style={styles.button}
-              onPress={onClose}
-            >
-              <Text>Close</Text>
-            </TouchableOpacity> */}
 
           </View>
 
