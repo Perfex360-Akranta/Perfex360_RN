@@ -31,6 +31,7 @@ import BreakdownAllocation from '../screens/Breakdown/BreakdownAllocation';
 import BreakdownCompletion from '../screens/Breakdown/BreakdownCompletion';
 import GeneralMaintenanceBooking from '../screens/GeneralMaintenance/generalmaintenancebooking';
 import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalmaintenancecompletion';
+import CltiSchedule from '../screens/CLTI/cltiSchedule';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -57,6 +58,7 @@ export type RootStackParamList = {
   BreakdownCompletion: { equipmentNo?: string } | undefined;
   GeneralMaintenanceBooking: { equipmentNo?: string } | undefined;
   GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
+  Cltischedule: undefined;
 
   WorkOrderList: undefined;
 
@@ -304,6 +306,12 @@ export default function AppNavigator() {
         name="GeneralMaintenanceCompletion"
         component={GeneralMaintenanceCompletion}
         options={{ title: 'General Maintenance Completion' }}
+      />
+
+      <Stack.Screen
+        name="Cltischedule"
+        component={CltiSchedule}
+        options={{ title: 'CLTI Schedule' }}
       />
 
 

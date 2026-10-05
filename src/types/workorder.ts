@@ -58,3 +58,17 @@ export interface WorkOrderSavePayload {
     multipleResps: any[];
     pmStdId?: string | null;
 }
+
+
+export interface EquipmentFnlnDetails {
+    fnlnKeyid: string;
+    machineid: string;
+    equipmentName: string;
+    equipmentNo: string;
+    compKeyid: string;
+    locnKeyid: string;
+    sbutKeyid: string;
+    pbutKeyid: string;
+    sectKeyid: string;
+    cellKeyid: string;
+}

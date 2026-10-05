@@ -1,5 +1,6 @@
 import { get, post } from '../axiosService';
 import { WorkOrderSavePayload } from '../../types/workorder';
+import { EquipmentFnlnDetails } from '../../types/workorder';
 
 export const saveWorkOrderCompletion = async (data: WorkOrderSavePayload) => {
     try {
@@ -13,6 +14,17 @@ export const saveWorkOrderCompletion = async (data: WorkOrderSavePayload) => {
 export const getEquipmentDetailsByNo = async (equipmentNo: string) => {
     try {
         const responseData = await get(`workOrder/equipment/details/${equipmentNo}`);
+        return responseData;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+
+export const getEquipmentByNoNEW = async (equipmentNo: string): Promise<EquipmentFnlnDetails> => {
+    try {
+        const responseData = await get(`workOrder/equipment/new/${equipmentNo}`);
         return responseData;
     } catch (error) {
         throw error;
