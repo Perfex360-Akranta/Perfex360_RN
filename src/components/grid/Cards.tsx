@@ -16,9 +16,10 @@ import React, {
 
 import { functionCall } from '../../services/api/functionCallApi';
 import Footer from './footer';
-import { DynamicGridProps, GridFilterProps } from '../../types/GridFilters';
+import { CardItemProps, DynamicGridProps, GridFilterProps } from '../../types/GridFilters';
 import { Column } from '../../types/GridFilters';
 import { useGrid } from '../../context/GridProvider';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
 
 
 
@@ -37,6 +38,7 @@ const Cards = forwardRef(({
   isEdit = false,
   onEdit,
   editCondition,
+  formatField,
 }: DynamicGridProps, ref) => {
 
 
@@ -48,6 +50,11 @@ const Cards = forwardRef(({
   const [metaRow, setMetaRow] = useState<any>({});
   const [headerRow, setHeaderRow] = useState<any>({});
   const [columns, setColumns] = useState<Column[]>([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
 
 
@@ -106,7 +113,7 @@ const Cards = forwardRef(({
   useEffect(() => {
     setFilter(prev => ({
       ...prev,
-      flid: filter.flid ?? currentRole.flid ?? '',
+      flid:  filter.flid !== '' ? filter.flid : (currentRole.flid ?? ''),
       fromDate: new Date(1801, 0, 1),
       toDate: new Date(2100, 11, 31),
       fromMonth: fromMonth,
@@ -122,8 +129,14 @@ const Cards = forwardRef(({
   }, []);
 
   useEffect(() => {
-    loadData();
+     setCurrentPage(1);
+      setData([]);
+    //loadData();
   }, [filter.reload]);
+
+  useEffect(() => {
+    loadData();
+  }, [currentPage]);
 
 
 
@@ -137,7 +150,7 @@ const Cards = forwardRef(({
 
   const parseMeta = (metaStr: string) => {
     const result: any = {};
-
+    
     if (!metaStr || typeof metaStr !== 'string') {
       return result;
     }
@@ -222,9 +235,15 @@ const Cards = forwardRef(({
 
     const params: string[] = [];
 
+
+    const fromRow = (currentPage - 1) * pageSize + 1;
+    const toRow = currentPage * pageSize;
+
+    params.push(`FROMTOROW=${fromRow} AND ${toRow}`);
+
     params.push('FILTERCOND=');
     params.push('ISTOTALCNT=Y');
-    params.push(`FROMTOROW=1 AND 100`);
+    // params.push(`FROMTOROW=1 AND 100`);
     params.push(`GRIDFILTER=${buildGridFilter()}`);
     params.push('ISGETCOL=N');
 
@@ -233,6 +252,13 @@ const Cards = forwardRef(({
 
   const loadData = async () => {
     try {
+
+    if (currentPage === 1) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
 
       const request = {
         vconditionparam: buildConditionParam(),
@@ -250,6 +276,7 @@ const Cards = forwardRef(({
       //setData(response.cur || []);
 
       const rows = response.cur || [];
+      setTotalCount(Number(response.totalcnt || 0));
       console.log('TOTAL ROWS RECEIVED:', rows.length, 'totalcnt field:', response.totalcnt);
 
       if (rows.length >= 2) {
@@ -275,7 +302,15 @@ const Cards = forwardRef(({
 
         setColumns(cols);
 
-        setData(rows.slice(3));
+        // setData(rows.slice(3));
+
+        const newRows = rows.slice(3);
+
+      if (currentPage === 1) {
+        setData(newRows);
+      } else {
+        setData(prev => [...prev, ...newRows]);
+      }
       }
 
       // If API returns { rows: [...] }
@@ -285,11 +320,12 @@ const Cards = forwardRef(({
       console.log('API Error:', error);
     } finally {
       setLoading(false);
-    }//change1
+      setLoadingMore(false);
+    }
 
   };
 
-  const CardItem = ({ item, index }: { item: ApiRow, index: number }) => {
+  const CardItem1 = ({ item , index }: { item: ApiRow , index:number }) => {
     const [expanded, setExpanded] = useState(false);
 
     const mandatoryFields: string[] = [];
@@ -314,14 +350,12 @@ const Cards = forwardRef(({
 
       if (meta.MT === 'TRUE') {
         mandatoryFields.push(field);
-      } else {
+      } else  {
         moreFields.push(field);
       }
     });
 
-    const showEdit =
-      isEdit &&
-      (editCondition ? editCondition(item) : true);
+    const showEdit = isEdit && (editCondition ? editCondition(item) : true);
 
     return (
       <View style={styles.card}>
@@ -358,15 +392,14 @@ const Cards = forwardRef(({
           {showEdit && (
             <TouchableOpacity
               onPress={() =>
-                onEdit?.({
-                  row: item,
-                  meta: metaRow,
-                  header: headerRow,
-                  index: index,
-                  prevRow: prevItem,
-                  nextRow: nextItem
+                onEdit?.({ row :item,
+                 meta : metaRow,
+                 header : headerRow,
+                 index : index,
+                 prevRow: prevItem,
+                 nextRow: nextItem
                 }
-
+                  
                 )
               }
               style={styles.editBtn}>
@@ -389,6 +422,131 @@ const Cards = forwardRef(({
   };
 
 
+  const CardItem = ({
+  item,
+  index,
+  formatField,
+}: CardItemProps) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const mandatoryFields: string[] = [];
+  const moreFields: string[] = [];
+
+  const isFirstRow = index === 0;
+  const isLastRow = index === data.length - 1;
+
+  const prevItem = isFirstRow ? null : data[index - 1];
+  const nextItem = isLastRow ? null : data[index + 1];
+
+  Object.keys(metaRow).forEach(field => {
+    const meta = parseMeta(metaRow[field]);
+
+    if (Object.keys(meta).length === 0 || meta.HD === 'T') {
+      return;
+    }
+
+    if (meta.MT === 'TRUE') {
+      mandatoryFields.push(field);
+    } else {
+      moreFields.push(field);
+    }
+  });
+
+  const showEdit =
+    isEdit && (editCondition ? editCondition(item) : true);
+
+  // Common rendering method for every field
+  const renderField = (field: string) => {
+    const value = item[field];
+
+    const formatted = formatField?.(field, value, item);
+
+    const displayText =
+      formatted?.text ?? String(value ?? '-');
+
+    const showIcon =
+      formatted?.showIcon !== false && !!formatted?.icon;
+
+    return (
+      <View style={styles.row} key={field}>
+        <Text style={styles.label}>
+          {headerRow[field] || field}
+        </Text>
+
+        <View
+          style={[
+            styles.valueContainer,
+            formatted?.backgroundColor
+              ? { backgroundColor: formatted.backgroundColor }
+              : null,
+          ]}
+        >
+          {showIcon && (
+            <MaterialIcons
+              name={formatted!.icon as any}
+              size={18}
+              color={formatted?.iconColor || formatted?.textColor || '#333'}
+            />
+          )}
+
+          <Text
+            style={[
+              styles.value,
+              formatted?.textColor
+                ? { color: formatted.textColor }
+                : null,
+            ]}
+          >
+            {displayText}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.card}>
+      {/* Mandatory Fields */}
+      {mandatoryFields.map(field => renderField(field))}
+
+      {/* View More Fields */}
+      {expanded &&
+        moreFields.map(field => renderField(field))}
+
+      <View style={showEdit ? styles.buttonContainer : undefined}>
+        {showEdit && (
+          <TouchableOpacity
+            onPress={() =>
+              onEdit?.({
+                row: item,
+                meta: metaRow,
+                header: headerRow,
+                index,
+                prevRow: prevItem,
+                nextRow: nextItem,
+              })
+            }
+            style={styles.editBtn}
+          >
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
+        )}
+
+        {moreFields.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setExpanded(!expanded)}
+            style={styles.viewMoreBtn}
+          >
+            <Text style={styles.viewMoreText}>
+              {expanded ? 'View Less' : 'View More'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
 
   if (loading) {
     return (
@@ -400,18 +558,39 @@ const Cards = forwardRef(({
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
-        data={data}
-        //renderItem={renderCard}
-        renderItem={({ item, index }) => <CardItem item={item} index={index} />}
-        keyExtractor={(_, index) => index.toString()}
-        contentContainerStyle={styles.listContainer}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        removeClippedSubviews
-      />
-      {footer && <Footer columns={columns} />}
+    <FlatList
+      data={data}
+      //renderItem={renderCard}
+      renderItem={({ item , index }) => <CardItem item={item} index={index} formatField={formatField} />}
+      keyExtractor={(_, index) => index.toString()}
+      contentContainerStyle={styles.listContainer}
+      initialNumToRender={10}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews
+
+      onEndReached={() => {
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (
+      !loadingMore &&
+      currentPage < totalPages
+    ) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }}
+
+  onEndReachedThreshold={1}
+
+  ListFooterComponent={
+    loadingMore ? (
+      <View style={{ padding: 15 }}>
+        <ActivityIndicator size="small" />
+      </View>
+    ) : null
+  }
+    />
+ { footer && <Footer  columns={columns} />  }
     </View>
   );
 });
@@ -489,6 +668,15 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
   },
+  valueContainer: {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+  paddingHorizontal: 8,
+  paddingVertical: 5,
+  borderRadius: 6,
+},
 });
 
 export default Cards;

@@ -4,6 +4,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import Cards from '../../components/grid/Cards';
+import { CardFormatMethod } from '../../types/GridFilters';
 
 
 
@@ -11,12 +12,38 @@ const AbnormalityView: React.FC = () => {
   
   //const [loading, setLoading] = useState<boolean>(true);
  
+const formatAbnField: CardFormatMethod = (
+  key,
+  value,
+  item
+) => {
+ 
+  if (key.toUpperCase() === 'TAGNO') {
+    if (String(item['TAGCLASS'.toLowerCase()]).toUpperCase() === 'RED') {
+      
+        return {
+          textColor: '#B91C1C',
+        };
+    }
+  }
 
+  if (key.toLowerCase() === 'detecteddate') {
+    if (String(item['STATUS'.toLowerCase()]).toUpperCase() === 'COMPLETED') {
+      
+        return {
+          textColor: '#007AFF',
+        };
+    }
+  }
+
+  // No special formatting; use the default display
+  return undefined;
+};
 
 
   return (
     <View style={{ flex: 1 }}>
-      <Cards  procedureName='abn_fn_abnormalityview_rn_sb' />
+      <Cards  procedureName='abn_fn_abnormalityview_rn_sb' formatField={formatAbnField} />
     </View>
   ); 
 };

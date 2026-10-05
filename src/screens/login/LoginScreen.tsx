@@ -155,9 +155,9 @@ const { setCurrentUser, setCurrentRole} = useGrid();
 
           </View>
 
-          <Text style={styles.footer}>
+          {/* <Text style={styles.footer}>
             © 2026 ITC Limited
-          </Text>
+          </Text> */}
 
         </View>
         
@@ -271,11 +271,14 @@ const styles = StyleSheet.create({
   position: 'absolute',
   bottom: 10,
   alignSelf: 'center',
+  alignItems: 'center',
+  justifyContent: 'center',
 },
 
 footerText: {
   color: '#FFFFFF',
   fontSize: 13,
+  
 },
 
 developerContainer: {

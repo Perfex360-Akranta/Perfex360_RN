@@ -2,7 +2,7 @@ export interface Column {
   key: string;
   label: string;
   type: string;
-}
+};
 
 
 export interface ColumnFilter {
@@ -12,7 +12,7 @@ export interface ColumnFilter {
   columnType: string;
   condition: string;
   value: string;
-}
+};
 export interface GridFilterProps {
   companyId?: string;
   locationId?: string;
@@ -33,7 +33,7 @@ export interface GridFilterProps {
 
   conditionParams?:any;
   reload? : Date | null;
-}
+};
 
  export interface DynamicGridProps {
   procedureName: string;
@@ -50,12 +50,11 @@ export interface GridFilterProps {
 
   onEdit?: (record : GridEditProps) => void;
 
-    editCondition?: (item: any) => boolean;
+  editCondition?: (item: any) => boolean;
 
-  rowFilter?: (item: any) => boolean;
+  formatField?: CardFormatMethod;
 
-  listEmptyText?: string;
-}
+};
 
 export interface GridEditProps {
    row: any,
@@ -64,4 +63,29 @@ export interface GridEditProps {
    index:Number,
    prevRow:any,
    nextRow:any,
-}
+};
+
+export interface ApiRow {
+  [key: string]: any;
+};
+
+export type CardFieldFormat = {
+  text?: string;
+  textColor?: string;
+  backgroundColor?: string;
+  icon?: string;
+  iconColor?: string;
+  showIcon?: boolean;
+};
+
+export type CardFormatMethod = (
+  key: string,
+  value: any,
+  item: ApiRow
+) => CardFieldFormat | undefined;
+
+export type CardItemProps = {
+  item: ApiRow;
+  index: number;
+  formatField?: CardFormatMethod;
+};
