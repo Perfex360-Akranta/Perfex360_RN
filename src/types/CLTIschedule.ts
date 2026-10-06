@@ -5,7 +5,7 @@ export interface ClitCalendarSavePayload {
     shiftId: string;
     status: string;
     observation: string;
-    tagClass: string;
+    //tagClass: string;
     createdBy: string;
 }
 

@@ -26,6 +26,18 @@ type RouteParams = {
     equipmentNo?: string;
 };
 
+const STATUS_GREEN = '#C8E6C9';
+const STATUS_YELLOW = '#FFF59D';
+const BLANK = '\u00A0';
+
+const HOW_ICON_MAP: Array<{ match: string[]; icon: string }> = [
+    { match: ['eye', 'see', 'visual'], icon: 'visibility' },
+    { match: ['ear', 'hear', 'sound'], icon: 'hearing' },
+    { match: ['nose', 'smell'], icon: 'air' },
+    { match: ['oral', 'mouth', 'tongue', 'taste'], icon: 'record-voice-over' },
+    { match: ['hand', 'touch'], icon: 'pan-tool' },
+];
+
 const firstValue = (row: any, keys: string[]) => {
     if (!row) {
         return '';
@@ -64,29 +76,6 @@ const pickByKeyPattern = (row: any, pattern: RegExp, exclude?: RegExp) => {
     return '';
 };
 
-// const recordId = (row: any) =>
-//     String(
-//         firstValue(row, [
-//             'clirefid',
-//             'clca_clirefid',
-//             'clitrefid',
-//             'clitstdid',
-//             'cli_ref_id',
-//             'stdid',
-//             'stdkeyid',
-//             'jhstdid',
-//             'activityid',
-//             'keyid',
-//             'clitkeyid',
-//             'jhkeyid',
-//         ]) ||
-//             pickByKeyPattern(
-//                 row,
-//                 /cli.?ref|clitstd|stdid|stdkey|activityid/i,
-//                 /item|name|desc|how|class|srl|serial|time|sched/i,
-//             ) ||
-//             '',
-//     );
 const recordId = (row: any) => {
     if (!row) {
         return '';
@@ -94,20 +83,52 @@ const recordId = (row: any) => {
 
     return String(
         firstValue(row, [
-            'keyid',           // CLCA_KEYID — 
+            'keyid', // CLCA_KEYID
             'clcakeyid',
             'clca_keyid',
             'clitkeyid',
             'jhkeyid',
             'activityid',
         ]) ||
-            pickByKeyPattern(
-                row,
-                /^keyid$|clca.?keyid|clitkeyid|activityid/i,
-                /item|name|desc|how|class|srl|serial|time|sched|ref/i,
-            ) ||
-            '',
+        pickByKeyPattern(
+            row,
+            /^keyid$|clca.?keyid|clitkeyid|activityid/i,
+            /item|name|desc|how|class|srl|serial|time|sched|ref/i,
+        ) ||
+        '',
     );
+};
+
+const formatHowAction = (field: string, value: any) => {
+    if (field.toLowerCase() !== 'howaction') {
+        return undefined;
+    }
+    const v = String(value ?? '').trim().toLowerCase();
+    if (!v || v === '{}') {
+        return undefined;
+    }
+    const hit = HOW_ICON_MAP.find(m => m.match.some(k => v.includes(k)));
+    return hit ? { icon: hit.icon, iconColor: '#0D5DB8', text: '' } : undefined;
+};
+
+const formatCardField = (field: string, value: any, _item: any) => {
+    if (field.toLowerCase() === 'howaction') {
+        return formatHowAction(field, value);
+    }
+
+    if (/^m_\d+$/i.test(field)) {
+        const raw = String(value ?? '');
+        const sep = raw.indexOf('|');
+        const n = parseInt(sep >= 0 ? raw.slice(0, sep) : raw, 10);
+        const remarks = sep >= 0 ? raw.slice(sep + 1).trim() : '';
+        const text = remarks || BLANK;
+
+        if (n === 1) { return { text, backgroundColor: STATUS_GREEN }; }
+        if (n === -1) { return { text, backgroundColor: STATUS_YELLOW }; }
+        return { text };
+    }
+
+    return undefined;
 };
 
 const CltiSchedule: React.FC = () => {
@@ -131,7 +152,6 @@ const CltiSchedule: React.FC = () => {
     const [shift, setShift] = useState('');
     const [notOk, setNotOk] = useState(false);
     const [observation, setObservation] = useState('');
-    const [tag, setTag] = useState('');
 
     const scannerNavigation = useMemo(
         () => ({
@@ -154,16 +174,6 @@ const CltiSchedule: React.FC = () => {
         }),
         [],
     );
-
-    // const handleView = () => {
-    //     if (!machineid) {
-    //         Alert.alert('Equipment is required', 'Please scan an equipment QR code first.');
-    //         return;
-    //     }
-    //     if (!shift) {
-    //         Alert.alert('Missing field', 'Select the Shift.');
-    //         return;
-    //     }
 
     const handleView = async () => {
         if (!machineid) {
@@ -201,6 +211,7 @@ const CltiSchedule: React.FC = () => {
 
         setAppliedParams({
             FLID: flid ?? '',
+            EQFNLN: flid ?? '',
             MACHINEID: machineid,
             MACHINENO: equipmentNo,
             SHIFT: shift,
@@ -236,21 +247,12 @@ const CltiSchedule: React.FC = () => {
         )
             .trim()
             .toUpperCase();
-        setNotOk(notOkFlag === 'Y' || notOkFlag === 'TRUE' || notOkFlag === '1');
+        setNotOk(notOkFlag === 'Y' || notOkFlag === 'TRUE' || notOkFlag === '1' || notOkFlag === 'NOT OK');
         setObservation(String(firstValue(row, ['observation', 'observations', 'remarks']) || ''));
-        setTag(String(firstValue(row, ['tag', 'tagid', 'tagclass']) || ''));
         setShowEdit(true);
     };
 
-    const handleNotOkToggle = () => {
-        setNotOk(prev => {
-            const next = !prev;
-            if (!next) {
-                setTag('');
-            }
-            return next;
-        });
-    };
+    const handleNotOkToggle = () => setNotOk(prev => !prev);
 
     const handleSave = async () => {
         if (!shift) {
@@ -267,10 +269,6 @@ const CltiSchedule: React.FC = () => {
         }
         if (notOk && !observation.trim()) {
             Alert.alert('Missing field', 'Enter the Observation when Not OK is checked.');
-            return;
-        }
-        if (notOk && !tag) {
-            Alert.alert('Missing field', 'Select the Tag when Not OK is checked.');
             return;
         }
 
@@ -304,14 +302,14 @@ const CltiSchedule: React.FC = () => {
             return;
         }
 
+        // NOTE: tagClass removed no need any longer,also commented in types
         const payload: ClitCalendarSavePayload = {
             activity: [activityId],
             cellId: saveCellId,
             machineId: saveMachineId,
             shiftId: saveShiftId,
-            status: notOk ? 'N' : 'Y',
+            status: notOk ? 'Not OK' : 'OK',
             observation: notOk ? observation.trim() : '',
-            tagClass: notOk ? tag : '',
             createdBy: currentUser.employeeId,
         };
 
@@ -348,21 +346,6 @@ const CltiSchedule: React.FC = () => {
         } finally {
             setSaving(false);
         }
-    };
-
-    const handleEmail = () => {
-        if (!notOk) {
-            return;
-        }
-        if (!observation.trim()) {
-            Alert.alert('Missing field', 'Enter the Observation before sending email.');
-            return;
-        }
-        if (!tag) {
-            Alert.alert('Missing field', 'Select the Tag before sending email.');
-            return;
-        }
-        Alert.alert('E-Mail', 'Not OK observation is ready to be mailed.');
     };
 
     return (
@@ -402,9 +385,6 @@ const CltiSchedule: React.FC = () => {
                                 }}
                             />
                         </View>
-                        {/* <TouchableOpacity style={styles.viewBtn} onPress={handleView}>
-                            <Text style={styles.viewBtnText}>View</Text>
-                        </TouchableOpacity> */}
                         <TouchableOpacity
                             style={[styles.viewBtn, viewLoading && styles.disabledBtn]}
                             onPress={handleView}
@@ -429,7 +409,7 @@ const CltiSchedule: React.FC = () => {
                             onEdit={handleEdit}
                             ref={cardsRef}
                             conditionParams={appliedParams}
-                            listEmptyText="No CLIT schedule records."
+                            formatField={formatCardField}
                         />
                     )}
                 </>
@@ -473,10 +453,7 @@ const CltiSchedule: React.FC = () => {
                             <View style={styles.inputGroup}>
                                 <Text style={styles.fieldLabel}>Observation</Text>
                                 <TextInput
-                                    style={[
-                                        styles.textArea,
-                                        !notOk && styles.textAreaDisabled,
-                                    ]}
+                                    style={[styles.textArea, !notOk && styles.textAreaDisabled]}
                                     value={observation}
                                     onChangeText={setObservation}
                                     multiline
@@ -484,23 +461,6 @@ const CltiSchedule: React.FC = () => {
                                     editable={notOk}
                                 />
                             </View>
-
-                            {notOk ? (
-                                <View style={styles.tagEmailRow}>
-                                    <View style={styles.tagCol}>
-                                        <AppDropdown
-                                            label="Tag"
-                                            manditory={true}
-                                            value={tag}
-                                            endpoint="commonFilter/abnForm/Combo_TagClass"
-                                            onChange={setTag}
-                                        />
-                                    </View>
-                                    <TouchableOpacity style={styles.emailBtn} onPress={handleEmail}>
-                                        <Text style={styles.emailBtnText}>E-Mail</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : null}
 
                             <TouchableOpacity
                                 style={[styles.saveBtn, saving && styles.disabledBtn]}
@@ -598,22 +558,6 @@ const styles = StyleSheet.create({
     checkboxChecked: { backgroundColor: '#1976D2' },
     checkmark: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
     checkboxLabel: { fontSize: 13, fontWeight: '600', color: '#1E293B' },
-    tagEmailRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        marginTop: 4,
-    },
-    tagCol: { flex: 1, marginRight: 8 },
-    emailBtn: {
-        height: 38,
-        marginBottom: 12,
-        backgroundColor: '#0D5DB8',
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    emailBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
     saveBtn: {
         marginTop: 12,
         backgroundColor: '#2E7D32',
