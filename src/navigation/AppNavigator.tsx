@@ -2,7 +2,8 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { DrawerActions } from '@react-navigation/native';
 
-import HomeScreen from '../screens/home/HomeScreen';
+//import HomeScreen from '../screens/home/HomeScreen';
+import HomeScreen from '../screens/home/HomeScreenNew';
 import AbnormalityFormScreen from '../screens/abnormality/AbnormalityFormScreen';
 import AbnormalityView from '../screens/abnormality/AbnormalityView';
 import ColumnFilterScreen from '../components/grid/ColumnFilterScreen';
@@ -284,7 +285,7 @@ export default function AppNavigator() {
         options={{ title: 'Breakdown Entry' }}
       />
 
-<Stack.Screen
+      <Stack.Screen
         name="BreakdownAllocation"
         component={BreakdownAllocation}
         options={{ title: 'Breakdown Allocation' }}
