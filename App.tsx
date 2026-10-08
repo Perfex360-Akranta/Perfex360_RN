@@ -19,6 +19,7 @@ function App() {
   
 useEffect(() => {
     const load = async () => {
+      try {
         const config = await getApiConfig();
 
         setApiConfig(
@@ -27,6 +28,16 @@ useEffect(() => {
             config.app
         );
         setupAuthInterceptor();
+
+      
+      } catch (error) {
+
+        console.error(
+          'Error loading API configuration:',
+          error
+        );
+
+      }
     };
 
     load();
