@@ -3,26 +3,13 @@ import {
   ScrollView,
   ActivityIndicator,
   View,
-  StyleSheet,
-  TouchableOpacity,
   Text,
 } from 'react-native';
 
-import TreeItem from '../../components/forms/MenuTreeComponent';
+import TreeItem from '../../components/forms/MenuTreeComponent1';
 import {getMenuData} from '../../services/api/menuApi';
 import {useGrid} from '../../context/GridProvider';
-import MaterialIcons from '@react-native-vector-icons/material-icons/static';
 
-
-interface MenuItem {
-  menuNumber: string;
-  menuCaption?: string;
-  menuName?: string;
-  parent?: boolean;
-  expanded?: boolean;
-  loading?: boolean;
-  children?: MenuItem[];
-}
 
 
 const MenuScreen = ({navigation}: any) => {
@@ -256,140 +243,33 @@ console.log(
     );
   };
 
-  // if (loading) {
+  if (loading) {
 
-  //   return (
-  //     <View
-  //       style={{
-  //         flex: 1,
-  //         justifyContent: 'center',
-  //         alignItems: 'center',
-  //       }}
-  //     >
-  //       <ActivityIndicator size="large" />
-  //     </View>
-  //   );
-  // }
-
-
-if (loading) {
-  return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#35DFA8" />
-    </View>
-  );
-}
-  return (
-    // <ScrollView>
-    //   {menuItems.map(item => (
-    //     <TreeItem
-    //       key={item.menuNumber}
-    //       item={item}
-    //       //navigation={navigation}
-    //       onPress={handleMenuClick}
-    //     />
-    //   ))}
-    // </ScrollView>
-
-     <View style={styles.drawer}>
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.menuContent}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Fixed Home menu */}
-      <TouchableOpacity
-        style={styles.fixedMenuRow}
-        activeOpacity={0.7}
-        onPress={() => {
-          navigation.closeDrawer();
-          navigation.navigate('Main',{
-            screen:'Home'
-          });
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
-        <MaterialIcons
-          name="home"
-          size={21}
-          color="#35DFA8"
-        />
-        <Text style={styles.fixedMenuText}>Home</Text>
-      </TouchableOpacity>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
-      {/* Fixed Dashboard menu */}
-      <TouchableOpacity
-        style={styles.fixedMenuRow}
-        activeOpacity={0.7}
-        onPress={() => {
-          navigation.closeDrawer();
-          navigation.navigate('Main' ,{
-            screen:'dashboard'
-          });
-        }}
-      >
-        <MaterialIcons
-          name="dashboard"
-          size={21}
-          color="#35DFA8"
-        />
-        <Text style={styles.fixedMenuText}>Dashboard</Text>
-      </TouchableOpacity>
-
-      {/* Separator */}
-      <View style={styles.menuSeparator} />
+  return (
+    <ScrollView>
       {menuItems.map(item => (
         <TreeItem
           key={item.menuNumber}
           item={item}
+          //navigation={navigation}
           onPress={handleMenuClick}
         />
       ))}
     </ScrollView>
-  </View>
   );
 };
-
-const styles = StyleSheet.create({
-  drawer: {
-    flex: 1,
-    backgroundColor: '#354858',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  menuContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#354858',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fixedMenuRow: {
-  minHeight: 48,
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 16,
-  gap: 12,
-  backgroundColor: '#405466',
-  borderBottomWidth: StyleSheet.hairlineWidth,
-  borderBottomColor: '#4B5E6D',
-},
-
-fixedMenuText: {
-  color: '#F4F7F9',
-  fontSize: 14,
-  fontWeight: '500',
-},
-
-menuSeparator: {
-  height: 2,
-  backgroundColor: '#718392',
-  marginVertical: 8,
-  marginHorizontal: 12,
-},
-});
 
 export default MenuScreen;
