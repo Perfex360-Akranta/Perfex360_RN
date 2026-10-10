@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { DrawerActions } from '@react-navigation/native';
 
+import AppHeaderSettingsMenu from '../components/forms/AppHeaderSettingsMenu';
 //import HomeScreen from '../screens/home/HomeScreen';
 import HomeScreen from '../screens/home/HomeScreenNew';
 import AbnormalityFormScreen from '../screens/abnormality/AbnormalityFormScreen';
@@ -33,6 +34,7 @@ import BreakdownCompletion from '../screens/Breakdown/BreakdownCompletion';
 import GeneralMaintenanceBooking from '../screens/GeneralMaintenance/generalmaintenancebooking';
 import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalmaintenancecompletion';
 import CltiSchedule from '../screens/CLTI/cltiSchedule';
+import { useAppTheme } from '../theme/ThemeContext';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -79,9 +81,20 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
 
+  const { colors } = useAppTheme();
   return (
     <Stack.Navigator initialRouteName="Login" screenOptions={({ navigation }) => ({
-      headerRight: () => <LogoutButton />,
+      headerStyle: {
+      backgroundColor: colors.header,
+    },
+    headerTintColor: colors.text,
+    headerTitleStyle: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+    headerShadowVisible: true,
+
+      headerRight: () => <AppHeaderSettingsMenu />,
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
@@ -89,6 +102,7 @@ export default function AppNavigator() {
           <MaterialIcons
             name="menu"
             size={28}
+            color={colors.text}
           />
         </TouchableOpacity>
       ),
@@ -149,7 +163,7 @@ export default function AppNavigator() {
             />
           ),
           // title: 'Perfex360'  , 
-          headerRight: () => <LogoutButton />,
+         // headerRight: () => <LogoutButton />,
         }}
       />
       <Stack.Screen

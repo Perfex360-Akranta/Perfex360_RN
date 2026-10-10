@@ -10,6 +10,7 @@ import { getApiConfig } from './src/utils/ApiConfigStore';
 import { useEffect } from 'react';
 import { setApiConfig } from './src/context/ApiConfig';
 import { setupAuthInterceptor } from './src/services/axios/authInterceptor';
+import { ThemeProvider } from './src/theme/ThemeContext';
 //enableScreens(true);
 const Drawer = createDrawerNavigator();
 
@@ -45,6 +46,7 @@ useEffect(() => {
 
 
   return (
+    <ThemeProvider>
     <GridProvider>
     <NavigationContainer>
       <Drawer.Navigator
@@ -62,6 +64,7 @@ useEffect(() => {
       {/* <AppNavigator /> */}
     </NavigationContainer>
     </GridProvider>
+    </ThemeProvider>
   );
 }
 
