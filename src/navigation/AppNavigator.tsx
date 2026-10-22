@@ -33,6 +33,9 @@ import BreakdownCompletion from '../screens/Breakdown/BreakdownCompletion';
 import GeneralMaintenanceBooking from '../screens/GeneralMaintenance/generalmaintenancebooking';
 import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalmaintenancecompletion';
 import CltiSchedule from '../screens/CLTI/cltiSchedule';
+import PCSEntry from '../screens/PCS/PcsEntry';
+import PCSProduction from '../screens/PCS/PcsProduction';
+import PcsLossEntryStandalone from '../screens/PCS/PcsLossEntryStandalone';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -60,7 +63,9 @@ export type RootStackParamList = {
   GeneralMaintenanceBooking: { equipmentNo?: string } | undefined;
   GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
   Cltischedule: undefined;
-
+  PCSEntry: undefined;
+  PCSProduction: undefined;
+  PcsLossEntryStandalone: undefined;
   WorkOrderList: undefined;
 
 
@@ -314,6 +319,26 @@ export default function AppNavigator() {
         component={CltiSchedule}
         options={{ title: 'CLTI Schedule' }}
       />
+
+      <Stack.Screen
+        name="PCSEntry"
+        component={PCSEntry}
+        options={{ title: 'PCS Entry' }}
+      />
+
+      <Stack.Screen
+        name="PCSProduction"
+        component={PCSProduction}
+        options={{ title: 'PCS Production' }}
+      />
+
+      <Stack.Screen
+        name="PcsLossEntryStandalone"
+        component={PcsLossEntryStandalone}
+        options={{ title: 'PCS Loss Entry' }}
+      />
+
+
 
 
 

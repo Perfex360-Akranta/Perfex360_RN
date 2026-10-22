@@ -4,7 +4,7 @@ import { EquipmentFnlnDetails } from '../../types/workorder';
 
 export const saveWorkOrderCompletion = async (data: WorkOrderSavePayload) => {
     try {
-        const responseData = await post('workOrder/saveWodGrd', data);
+        const responseData = await post('workOrder/saveWodGrdMobile', data);
         return responseData;
     } catch (error) {
         throw error;

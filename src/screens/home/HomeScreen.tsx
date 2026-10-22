@@ -127,35 +127,35 @@ const cards: CardItem[] = [
   {
     title: 'BREAKDOWN Booking',
     subtitle: 'Create a Breakdown Entry',
-    icon: 'warning-amber',
+    icon: 'handyman',
     colors: ['#ff334aff', '#f7e3e7ff'],
     screen: 'BreakdownEntry',
   },
   {
     title: 'BREAKDOWN ALLOCATION',
     subtitle: 'Breakdown Allocation',
-    icon: 'task', 
-    colors: ['#69ff33ff', '#e7e4f7ff'],
+    icon: 'engineering',
+    colors: ['#2e7641ff', '#e7e4f7ff'],
     screen: 'BreakdownAllocation',
   },
   {
     title: 'BREAKDOWN COMPLETION',
     subtitle: 'Breakdown Completion',
-    icon: 'done', 
+    icon: 'verified',
     colors: ['#ff8b22ff', '#f7e3e7ff'],
     screen: 'BreakdownCompletion',
   },
   {
     title: 'GENERAL MAINTENANCE',
     subtitle: 'Create a General Maintenance booking',
-    icon: 'build',
+    icon: 'construction',
     colors: ['#1565C0', '#90CAF9'],
     screen: 'GeneralMaintenanceBooking',
   },
   {
     title: 'GENERAL MAINTENANCE COMPLETION',
     subtitle: 'Complete a General Maintenance booking',
-    icon: 'build',
+    icon: 'verified',
     colors: ['#1565C0', '#90CAF9'],
     screen: 'GeneralMaintenanceCompletion',
   },
@@ -173,7 +173,7 @@ const cards: CardItem[] = [
 export default function HomeScreen({ navigation }: any) {
   const [date, setDate] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
-  const [shift, setShift] = useState('');
+  const [shift, setShift] = useState(''); 
   const { currentUser, currentRole } = useGrid();
 
   const loadShift = async () => {
@@ -440,283 +440,3 @@ const styles = StyleSheet.create({
 
 });
 
-// import React, { useEffect, useState } from 'react';
-// import {
-//   View,
-//   Text,
-//   TouchableOpacity,
-//   StyleSheet,
-//   ScrollView,
-//   LayoutAnimation,
-//   Platform,
-//   UIManager,
-// } from 'react-native';
-
-// import MaterialIcons from '@react-native-vector-icons/material-icons';
-// import { useGrid } from '../../context/GridProvider';
-// import DatePicker from '../../components/forms/DatePicker';
-// import AppDropdown from '../../components/forms/AppDropdown';
-// import { getCurrentShift } from '../../services/api/authApi';
-
-// if (
-//   Platform.OS === 'android' &&
-//   UIManager.setLayoutAnimationEnabledExperimental
-// ) {
-//   UIManager.setLayoutAnimationEnabledExperimental(true);
-// }
-
-// type GroupItem = {
-//   title: string;
-//   icon: React.ComponentProps<typeof MaterialIcons>['name'];
-//   color: string;
-//   bg: string;
-//   screen: string;
-// };
-
-// type Group = {
-//   key: string;
-//   title: string;
-//   icon: React.ComponentProps<typeof MaterialIcons>['name'];
-//   accentColor: string;
-//   accentBg: string;
-//   items: GroupItem[];
-// };
-
-// const groups: Group[] = [
-//   {
-//     key: 'abnormality',
-//     title: 'Abnormality',
-//     icon: 'warning',
-//     accentColor: '#0C447C',
-//     accentBg: '#EAF1FD',
-//     items: [
-//       { title: 'Dashboard', icon: 'analytics', color: '#2F6FED', bg: '#E6F1FB', screen: 'dashboard' },
-//       { title: 'Identify', icon: 'search', color: '#2F6FED', bg: '#E6F1FB', screen: 'AbnForm' },
-//       { title: 'Allocate', icon: 'groups', color: '#22A06B', bg: '#E6F9F0', screen: 'AbnAllocation' },
-//       { title: 'Complete', icon: 'check-circle', color: '#7B5CF0', bg: '#F0EBFD', screen: 'AbnComp' },
-//       { title: 'View', icon: 'visibility', color: '#E08A1E', bg: '#FDF1E1', screen: 'AbnView' },
-//     ],
-//   },
-//   {
-//     key: 'suggestions',
-//     title: 'Suggestions',
-//     icon: 'lightbulb',
-//     accentColor: '#993C1D',
-//     accentBg: '#FAECE7',
-//     items: [
-//       { title: 'Creation', icon: 'lightbulb', color: '#D8583A', bg: '#FDECE6', screen: 'Suggestion' },
-//       { title: 'Modification', icon: 'edit', color: '#993556', bg: '#FBEAF0', screen: 'SuggestionModification' },
-//       { title: 'View', icon: 'visibility', color: '#0F6E56', bg: '#E1F5EE', screen: 'SuggestionView' },
-//       { title: 'Accept / reject', icon: 'fact-check', color: '#1D9E75', bg: '#E1F5EE', screen: 'SuggestionAcceptReject' },
-//       { title: 'Kaizen approval', icon: 'approval', color: '#4C5FA6', bg: '#EEEDFE', screen: 'KaizenApproval' },
-//     ],
-//   },
-//   {
-//     key: 'Work Order',
-//     title: 'Work Order',
-//     icon: 'build',
-//     accentColor: '#444441',
-//     accentBg: '#F1EFE8',
-//     items: [
-//       { title: 'Work orders', icon: 'work-outline', color: '#5F5E5A', bg: '#F1EFE8', screen: 'WorkOrderList' },
-//     ],
-//   },
-// ];
-
-// export default function HomeScreen({ navigation }: any) {
-//   const [date, setDate] = useState(new Date());
-//   const [shift, setShift] = useState('');
-//   const [expandedKey, setExpandedKey] = useState<string>('abnormality');
-//   const { currentUser, currentRole } = useGrid();
-
-//   const loadShift = async () => {
-//     try {
-//       const result = await getCurrentShift();
-//       setShift(result);
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   useEffect(() => {
-//     loadShift();
-//   }, []);
-
-//   const toggleGroup = (key: string) => {
-//     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-//     setExpandedKey(prev => (prev === key ? '' : key));
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <ScrollView>
-
-//         <View style={styles.welcomeCard}>
-//           <Text style={styles.user}>Welcome</Text>
-//           <Text style={styles.company}>{currentUser.userName}</Text>
-//           <Text style={styles.company}>
-//             {currentRole.roleName} - {currentRole.fnlnDescription}
-//           </Text>
-//         </View>
-
-//         <View style={styles.filterCard}>
-//           <View style={styles.row}>
-//             <DatePicker label="Date" disable={true} value={date} />
-//             <View style={styles.shift}>
-//               <AppDropdown
-//                 label="Shift"
-//                 disable={true}
-//                 value={shift}
-//                 endpoint="commonFilter/Shift"
-//                 onChange={(value: any) => setShift(value)}
-//               />
-//             </View>
-//           </View>
-//         </View>
-
-//         <View style={styles.groupsWrap}>
-//           {groups.map(group => {
-//             const isOpen = expandedKey === group.key;
-//             return (
-//               <View
-//                 key={group.key}
-//                 style={[styles.groupCard, { borderLeftColor: group.accentColor }]}>
-//                 <TouchableOpacity
-//                   style={[styles.groupHeader, isOpen && { backgroundColor: group.accentBg }]}
-//                   activeOpacity={0.8}
-//                   onPress={() => toggleGroup(group.key)}>
-//                   <View style={[styles.groupIconBadge, { backgroundColor: group.accentBg }]}>
-//                     <MaterialIcons name={group.icon} size={18} color={group.accentColor} />
-//                   </View>
-//                   <Text
-//                     style={[
-//                       styles.groupTitle,
-//                       { color: isOpen ? group.accentColor : '#1a1a1a' },
-//                     ]}>
-//                     {group.title}
-//                   </Text>
-//                   {!isOpen && (
-//                     <Text style={styles.groupCount}>{group.items.length} items</Text>
-//                   )}
-//                   <MaterialIcons
-//                     name={isOpen ? 'expand-less' : 'expand-more'}
-//                     size={20}
-//                     color={isOpen ? group.accentColor : '#999'}
-//                   />
-//                 </TouchableOpacity>
-
-//                 {isOpen && (
-//                   <View style={styles.groupBody}>
-//                     {group.items.map(item => (
-//                       <TouchableOpacity
-//                         key={item.title}
-//                         style={styles.groupItem}
-//                         activeOpacity={0.8}
-//                         onPress={() => navigation.navigate(item.screen)}>
-//                         <View style={[styles.itemIconBadge, { backgroundColor: item.bg }]}>
-//                           <MaterialIcons name={item.icon} size={26} color={item.color} />
-//                         </View>
-//                         <Text style={styles.groupItemLabel} numberOfLines={1}>{item.title}</Text>
-//                       </TouchableOpacity>
-//                     ))}
-//                   </View>
-//                 )}
-//               </View>
-//             );
-//           })}
-//         </View>
-
-//       </ScrollView>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: '#f2f2f3ff' },
-
-//   welcomeCard: {
-//     margin: 15,
-//     backgroundColor: 'white',
-//     padding: 15,
-//     borderRadius: 12,
-//     elevation: 4,
-//   },
-//   user: { fontSize: 18, fontWeight: '700' },
-//   company: { color: '#666', marginTop: 4 },
-
-//   filterCard: {
-//     marginHorizontal: 15,
-//     backgroundColor: 'white',
-//     borderRadius: 12,
-//     padding: 15,
-//     elevation: 4,
-//   },
-//   row: { flexDirection: 'row', marginTop: 15 },
-//   shift: { flex: 1 },
-
-//   groupsWrap: {
-//     paddingHorizontal: 15,
-//     marginTop: 15,
-//     gap: 10,
-//   },
-//   groupCard: {
-//     backgroundColor: 'white',
-//     borderRadius: 14,
-//     borderWidth: 1,
-//     borderColor: '#E9EAEC',
-//     borderLeftWidth: 4,
-//     overflow: 'hidden',
-//     marginBottom: 10,
-//     elevation: 2,
-//   },
-//   groupHeader: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     paddingVertical: 12,
-//     paddingHorizontal: 14,
-//     gap: 10,
-//   },
-//   groupIconBadge: {
-//     width: 32,
-//     height: 32,
-//     borderRadius: 16,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-//   groupTitle: {
-//     fontSize: 14,
-//     fontWeight: '700',
-//     flex: 1,
-//   },
-//   groupCount: {
-//     fontSize: 11,
-//     color: '#999',
-//     marginRight: 4,
-//   },
-//   groupBody: {
-//     flexDirection: 'row',
-//     flexWrap: 'wrap',
-//     paddingHorizontal: 10,
-//     paddingBottom: 16,
-//     paddingTop: 6,
-//   },
-//   groupItem: {
-//     width: '25%',
-//     alignItems: 'center',
-//     paddingVertical: 10,
-//   },
-//   itemIconBadge: {
-//     width: 56,
-//     height: 56,
-//     borderRadius: 28,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     marginBottom: 8,
-//   },
-//   groupItemLabel: {
-//     fontSize: 12,
-//     fontWeight: '500',
-//     color: '#444',
-//     textAlign: 'center',
-//   },
-// });

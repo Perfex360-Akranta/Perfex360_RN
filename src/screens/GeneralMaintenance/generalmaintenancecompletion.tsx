@@ -277,8 +277,8 @@ const GeneralMaintenanceCompletion: React.FC = () => {
                     onEdit={handleEdit}
                     ref={cardsRef}
                     conditionParams={conditionParams}
-                    rowFilter={isPendingRecord}
-                    listEmptyText="No pending general maintenance records."
+                    //rowFilter={isPendingRecord}
+                    //listEmptyText="No pending general maintenance records."
                 />
             )}
 

@@ -97,6 +97,16 @@ const groups: CardGroup[] = [
       { title: 'CLTI schedule', subtitle: 'CLTI schedule', icon: 'construction', screen: 'Cltischedule' },
     ],
   },
+
+  {
+    label: 'PCS',
+    band: '#CEDEF2',
+    icon: '#8FADD9',
+    items: [
+      { title: 'PCS Entry', subtitle: 'PCS Entry', icon: 'construction', screen: 'PCSEntry' },
+      { title: 'Loss Entry', subtitle: 'Enter loss directly', icon: 'event-note', screen: 'PcsLossEntryStandalone' },
+    ],
+  },
 ];
 
 function getInitials(name?: string) {
