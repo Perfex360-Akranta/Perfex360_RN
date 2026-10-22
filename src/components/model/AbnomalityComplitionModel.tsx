@@ -1,15 +1,16 @@
+import AssistTextInput from '../forms/AssistTextInput';
 import React, {useState, useRef,useEffect} from 'react';
 import {
   Modal,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
 } from 'react-native';
 
 import AppDropdown from '../forms/AppDropdown';
+import FieldAssistBar from '../assist/FieldAssistBar';
 import DatePicker from '../forms/DatePicker';
  import { UpdateAbnCompletion } from '../../services/api/abnormalityApi';
 import { useGrid } from '../../context/GridProvider';
@@ -189,7 +190,7 @@ useEffect(() => {
 
        <Text>Counter Measure</Text>
       
-            <TextInput
+            <AssistTextInput
               multiline
               numberOfLines={5}
               editable={!disable}
@@ -203,7 +204,7 @@ useEffect(() => {
 
              <Text>Remarks</Text>
             
-                  <TextInput
+                  <AssistTextInput
                     multiline
                     numberOfLines={5}
                    editable={!disable}
@@ -232,6 +233,7 @@ useEffect(() => {
           </View>
 
         </View>
+        {visible ? <FieldAssistBar hosted /> : null}
       </View>
     </Modal>
   );

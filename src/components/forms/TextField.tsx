@@ -1,9 +1,9 @@
+import AssistTextInput from './AssistTextInput';
 import React from 'react';
 
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
 } from 'react-native';
 
@@ -24,7 +24,7 @@ const TextField = ({
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
 
-      <TextInput
+      <AssistTextInput
         style={styles.input}
         value={value}
         placeholder={placeholder}

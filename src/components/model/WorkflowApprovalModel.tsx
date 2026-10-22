@@ -1,15 +1,16 @@
+import AssistTextInput from '../forms/AssistTextInput';
 import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     Modal,
     Alert,
     Platform,
 } from 'react-native';
 import DatePicker from '../forms/DatePicker';
+import FieldAssistBar from '../assist/FieldAssistBar';
 
 import AppDropdown from '../forms/AppDropdown';
 import { updateKaizenWorkflowStatus } from '../../services/api/kaizenSuggestionApi';
@@ -283,7 +284,7 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Remarks</Text>
                         {isEditing ? (
-                            <TextInput
+                            <AssistTextInput
                                 style={styles.remarksInput}
                                 value={remarks}
                                 multiline
@@ -324,6 +325,7 @@ const WorkflowApprovalModel: React.FC<WorkflowApprovalModelProps> = ({
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
                 <View style={styles.modalWrapper}>{content}</View>
+                {visible ? <FieldAssistBar hosted /> : null}
             </View>
         </Modal>
     );

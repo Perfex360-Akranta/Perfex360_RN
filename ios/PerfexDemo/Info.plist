@@ -35,7 +35,13 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow camera access to scan QR codes.</string>
+	<string>Allow camera access to scan QR codes and read text into form fields.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow microphone access so spoken words can be written into the active field.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Allow speech recognition so spoken words can be written into the active field.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow photo access so text in an uploaded image can be written into the active field.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UILaunchStoryboardName</key>

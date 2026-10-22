@@ -1,9 +1,9 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert
@@ -381,7 +381,7 @@ const handleDetectedByChange = (newValue:any) => {
 <View style={{ flexDirection: 'row' }}>
     <View>
       <Text>Tag No</Text>
-      <TextInput
+      <AssistTextInput
         style={styles.SharedInput}
         value={form.keyid}
         editable={false}
@@ -392,7 +392,7 @@ const handleDetectedByChange = (newValue:any) => {
       </View>
  <View>
       <Text>Ref Doc ID</Text>
-      <TextInput
+      <AssistTextInput
          style={styles.SharedInput}
         value={form.refdocid}
         editable={false}
@@ -451,7 +451,7 @@ const handleDetectedByChange = (newValue:any) => {
 />
       <Text>Abnormality Description</Text>
 
-      <TextInput
+      <AssistTextInput
         multiline
         numberOfLines={5}
         style={styles.textArea}
@@ -577,7 +577,7 @@ const handleDetectedByChange = (newValue:any) => {
 
 <Text>Counter Measure</Text>
 
-      <TextInput
+      <AssistTextInput
         multiline
         numberOfLines={4}
         style={styles.textArea}
@@ -590,7 +590,7 @@ const handleDetectedByChange = (newValue:any) => {
 
       <Text>Remarks</Text>
 
-      <TextInput
+      <AssistTextInput
         multiline
         numberOfLines={4}
         style={styles.textArea}

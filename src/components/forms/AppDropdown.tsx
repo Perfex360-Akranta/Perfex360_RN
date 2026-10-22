@@ -1,9 +1,12 @@
-
 import React, {
   useState,
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useCallback,
+  useId,
+  useRef,
+  useMemo,
 } from 'react';
 import {
   View,
@@ -15,7 +18,9 @@ import {
 import {Dropdown} from 'react-native-element-dropdown';
 
 import {getDropdownData} from '../../services/api/dropdownApi';
-import MaterialIcons from '@react-native-vector-icons/material-icons/static';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
+import {ActiveField, useFieldAssist} from '../../context/FieldAssistContext';
+import FieldAssistAction from '../assist/FieldAssistAction';
 
 interface DropdownItem {
   label: string;
@@ -74,6 +79,38 @@ const AppDropdown = forwardRef(({
     }
   }, [dataset]);
 
+  const { registerField, unregisterField } = useFieldAssist();
+  const id = useId();
+  const dataRef = useRef<DropdownItem[]>([]);
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+
+  dataRef.current = data;
+  valueRef.current = value;
+  onChangeRef.current = onChange;
+
+  const field: ActiveField = useMemo(
+    () => ({
+      id,
+      label: label || 'Dropdown',
+      type: 'dropdown',
+      getValue: () => valueRef.current || '',
+      setText: val => onChangeRef.current?.(val),
+      getOptions: () => dataRef.current,
+      onSelectOption: val => {
+        onChangeRef.current?.(val);
+      },
+    }),
+    [id, label],
+  );
+
+  useEffect(() => {
+    if (!disable) {
+      registerField(field);
+    }
+    return () => unregisterField(id);
+  }, [disable, field, id, registerField, unregisterField]);
+
   const handleClear = () => {
     onChange?.('');
   };
@@ -129,6 +166,10 @@ const AppDropdown = forwardRef(({
 
           renderRightIcon={() => (
             <View style={styles.rightIcons}>
+
+              {!disable && (
+                <FieldAssistAction field={field} />
+              )}
 
               {value && !disable && (
                 <TouchableOpacity
@@ -249,7 +290,7 @@ const styles = StyleSheet.create({
   rightIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
   },
 
   clearButton: {
@@ -265,4 +306,3 @@ const styles = StyleSheet.create({
 });
 
 export default AppDropdown;
-

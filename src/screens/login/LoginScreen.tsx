@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { saveUser } from '../../services/storage/userStorage';
 import { saveToken } from '../../services/storage/tokenStorage';
 import ServerConfigModal from '../../components/model/ServerConfigModel';
 import { useGrid } from '../../context/GridProvider';
+import { useFieldAssist } from '../../context/FieldAssistContext';
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState('');
@@ -26,6 +27,11 @@ const LoginScreen = ({ navigation }: any) => {
 const [showServerModal, setShowServerModal] = useState(false);
 
 const { setCurrentUser, setCurrentRole} = useGrid();
+const { closeAssist } = useFieldAssist();
+
+useEffect(() => {
+  closeAssist();
+}, [closeAssist]);
 
   const onLogin = async () => {
     if (!username || !password) {
@@ -122,13 +128,16 @@ const { setCurrentUser, setCurrentRole} = useGrid();
 
             <TextInput
               placeholder="Username"
+              placeholderTextColor="#9ca3af"
               value={username}
               onChangeText={setUsername}
               style={styles.input}
+              autoCapitalize="none"
             />
 
             <TextInput
               placeholder="Password"
+              placeholderTextColor="#9ca3af"
               secureTextEntry
               value={password}
               onChangeText={setPassword}

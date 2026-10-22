@@ -1,12 +1,13 @@
+import AssistTextInput from '../forms/AssistTextInput';
 import React, {useEffect, useState} from 'react';
 import {
   Modal,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import FieldAssistBar from '../assist/FieldAssistBar';
 import { getApiConfig, saveApiConfig } from '../../utils/ApiConfigStore';
 import { setApiConfig } from '../../context/ApiConfig';
 
@@ -63,14 +64,14 @@ export default function ServerConfigModal({
             Server Settings
           </Text>
 
-          <TextInput
+          <AssistTextInput
             style={styles.input}
             placeholder="IP Address"
             value={ip}
             onChangeText={setIp}
           />
 
-          <TextInput
+          <AssistTextInput
             style={styles.input}
             placeholder="Port"
             keyboardType="numeric"
@@ -78,7 +79,7 @@ export default function ServerConfigModal({
             onChangeText={setPort}
           />
 
-           <TextInput
+           <AssistTextInput
             style={styles.input}
             placeholder="App"
             value={app}
@@ -100,6 +101,7 @@ export default function ServerConfigModal({
           </View>
 
         </View>
+        {visible ? <FieldAssistBar hosted /> : null}
       </View>
 
     </Modal>

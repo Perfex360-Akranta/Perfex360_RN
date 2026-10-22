@@ -54,6 +54,10 @@ export interface GridFilterProps {
 
   formatField?: CardFormatMethod;
 
+  rowFilter?: (row: any) => boolean;
+
+  listEmptyText?: string;
+
 };
 
 export interface GridEditProps {

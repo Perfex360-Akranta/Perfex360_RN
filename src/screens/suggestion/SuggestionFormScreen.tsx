@@ -1,9 +1,9 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -17,6 +17,8 @@ import { saveSuggestion, getSuggestionById } from '../../services/api/kaizenSugg
 import { useGrid } from '../../context/GridProvider';
 import { get } from '../../services/axiosService';
 import { toApiDateString } from '../../utils/DateFormat';
+import { useVoiceGuide } from '../../context/VoiceGuideContext';
+import { VoiceGuidedField } from '../../components/assist/VoiceGuidedField';
 
 interface SuggestionForm {
   keyid: string;
@@ -82,7 +84,21 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const suggestedByRef = useRef<any>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
 
+  const {
+    startGuidance,
+    stopGuidance,
+    announceSuccess,
+    announceFailure,
+    isActive,
+  } = useVoiceGuide();
 
+  useEffect(() => {
+    startGuidance('Suggestion Form');
+
+    return () => {
+      stopGuidance();
+    };
+  }, [startGuidance, stopGuidance]);
 
   const [form, setForm] = useState<SuggestionForm>({
     keyid: '',
@@ -229,19 +245,37 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
     console.log('save Started:', payload);
 
+    // try {
+    //   setSaving(true);
+    //   const responseData = await saveSuggestion(payload);
+    //   console.log('responseData:', responseData);
+    //   await announceSuccess('Suggestion');
+    //   Alert.alert('Success', successMessage);
+
+    //   if (editRecord) {
+    //     navigation.goBack();
+    //   } else {
+    //     resetForm();
+    //   }
+    // } 
     try {
       setSaving(true);
       const responseData = await saveSuggestion(payload);
       console.log('responseData:', responseData);
+      stopGuidance(); // no more field prompts after a successful save
+      const spoken = announceSuccess('Suggestion');
       Alert.alert('Success', successMessage);
 
       if (editRecord) {
+        await spoken; // let the announcement finish before the screen unmounts
         navigation.goBack();
       } else {
         resetForm();
       }
-    } catch (error: any) {
+    }
+    catch (error: any) {
       console.log('save error:', error);
+      await announceFailure(error?.response?.data?.message || error?.message || 'Something went wrong');
       Alert.alert(
         'Save Failed',
         error?.response?.data?.message || error?.message || 'Something went wrong'
@@ -290,7 +324,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     }
   };
 
-//change
+  //change
   const recallCategory = async (keyid: string) => {
     try {
       const result = await get(`kznbnk/categoryRecall/${keyid}`);
@@ -452,59 +486,89 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         Suggestion
       </Text> */}
 
-      <FunctionalLocationView
-        flid={form.flid}
-        visible={true}
-        validate={{
-          isCell: true
-        }}
-        onSelect={(value: any) => {
-          //updateField('flid', value);
-          FunctionalLocation_SuccessCallback(value);
-        }}
-      />
-
-      <Text style={styles.mandatoryLabel}>*Suggestion</Text>
-
-      <TextInput
-        multiline
-        numberOfLines={5}
-        style={styles.textArea}
-        value={form.kaizen}
-        onChangeText={v =>
-          updateField('kaizen', v)
-        }
-      />
-{/* change */}
-      <View>
-        <AppDropdown
-          label="Theme Category"
-          value={form.benefit}
-          endpoint="commonFilter/kaizen/kaizenactegoryfillcombo"
-          onChange={(value: any) => {
-            const applyRecall = async () => {
-              const recall = await recallCategory(value);
-              updateField('benefit', value);
-              if (recall?.code) {
-                applyBenefitAreaFromCode(recall.code);
-              }
-            };
-
-            if (form.keyid) {
-              Alert.alert(
-                'Confirm',
-                'Do you want to change the Benefit Area and Theme Category?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'OK', onPress: applyRecall },
-                ]
-              );
-            } else {
-              applyRecall();
-            }
+      <VoiceGuidedField
+        id="functionalLocation"
+        label="select functional location"
+        type="dropdown"
+        isMandatory={true}
+        order={1}
+        getValue={() => form.elementid}
+        screenName="Suggestion Form"
+      >
+        <FunctionalLocationView
+          flid={form.flid}
+          visible={true}
+          validate={{
+            isCell: true
+          }}
+          onSelect={(value: any) => {
+            //updateField('flid', value);
+            FunctionalLocation_SuccessCallback(value);
           }}
         />
-      </View>
+      </VoiceGuidedField>
+
+      <VoiceGuidedField
+        id="suggestion"
+        label="enter suggestion"
+        type="text"
+        isMandatory={true}
+        order={2}
+        getValue={() => form.kaizen}
+        screenName="Suggestion Form"
+      >
+        <Text style={styles.mandatoryLabel}>*Suggestion</Text>
+
+        <AssistTextInput
+          multiline
+          numberOfLines={5}
+          style={styles.textArea}
+          value={form.kaizen}
+          onChangeText={v =>
+            updateField('kaizen', v)
+          }
+        />
+      </VoiceGuidedField>
+      {/* change */}
+      <VoiceGuidedField
+        id="themeCategory"
+        label="select theme category"
+        type="dropdown"
+        isMandatory={false}
+        order={3}
+        getValue={() => form.benefit}
+        screenName="Suggestion Form"
+      >
+        <View>
+          <AppDropdown
+            label="Theme Category"
+            value={form.benefit}
+            endpoint="commonFilter/kaizen/kaizenactegoryfillcombo"
+            onChange={(value: any) => {
+              const applyRecall = async () => {
+                const recall = await recallCategory(value);
+                updateField('benefit', value);
+                if (recall?.code) {
+                  applyBenefitAreaFromCode(recall.code);
+                }
+              };
+
+              if (form.keyid) {
+                Alert.alert(
+                  'Confirm',
+                  'Do you want to change the Benefit Area and Theme Category?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'OK', onPress: applyRecall },
+                  ]
+                );
+              } else {
+                applyRecall();
+              }
+            }}
+          />
+        </View>
+      </VoiceGuidedField>
 
       {/* <View>
         <AppDropdown
@@ -572,81 +636,111 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         /><Text style={styles.label}>Non JH Esp</Text>
       </View> */}
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
-        <Text style={styles.mandatoryLabel}>Suggested By *</Text>
+      <VoiceGuidedField
+        id="suggestedBy"
+        label="select suggested by"
+        type="dropdown"
+        isMandatory={true}
+        order={4}
+        getValue={() => form.suggestedby}
+        screenName="Suggestion Form"
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
+          <Text style={styles.mandatoryLabel}>Suggested By *</Text>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <CheckBox
-            value={isOthers}
-            disabled={false}
-            onValueChange={handleOthersChange}
-          /><Text style={styles.label}>OTHERS</Text>
-          {/* <CheckBox
-            value={isNonJhEsp}
-            disabled={false}
-            onValueChange={handleNonJhEspChange}
-          /><Text style={styles.label}>Non JH Esp</Text> */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <CheckBox
+              value={isOthers}
+              disabled={false}
+              onValueChange={handleOthersChange}
+            /><Text style={styles.label}>OTHERS</Text>
+            {/* <CheckBox
+              value={isNonJhEsp}
+              disabled={false}
+              onValueChange={handleNonJhEspChange}
+            /><Text style={styles.label}>Non JH Esp</Text> */}
+          </View>
         </View>
-      </View>
 
-      <AppDropdown
-        ref={suggestedByRef}
-        manditory={true}
-        value={form.suggestedby}
-        endpoint="commonFilter/employee"
-        params={{
-          cellId: selectedCellId,
-          others: isOthers ? 'Y' : undefined,
-        }}
-        onChange={(value: any) =>
-          updateField('suggestedby', value)
-        }
-      />
-
-
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-        <DatePicker
-          key={dateResetKey}
-          label="Date"
-          value={form.date}
-          onChange={v => {
-            const selected = new Date(v);
-            const today = new Date();
-            today.setHours(23, 59, 59, 999);
-
-            if (selected > today) {
-              Alert.alert('Invalid Date', 'Future date not accepted');
-              updateField('date', new Date());
-              setDateResetKey(prev => prev + 1);
-              return;
-            }
-
-            updateField('date', v);
+        <AppDropdown
+          ref={suggestedByRef}
+          manditory={true}
+          value={form.suggestedby}
+          endpoint="commonFilter/employee"
+          params={{
+            cellId: selectedCellId,
+            others: isOthers ? 'Y' : undefined,
           }}
+          onChange={(value: any) =>
+            updateField('suggestedby', value)
+          }
         />
+      </VoiceGuidedField>
 
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginLeft: 20, marginBottom: 12 }}>
-          <CheckBox
-            value={isNonJhEsp}
-            disabled={false}
-            onValueChange={handleNonJhEspChange}
-          /><Text style={styles.label}>Non JH Esp</Text>
+
+      <VoiceGuidedField
+        id="date"
+        label="select date"
+        type="dropdown"
+        isMandatory={false}
+        order={5}
+        getValue={() => form.date.toISOString()}
+        screenName="Suggestion Form"
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+          <DatePicker
+            key={dateResetKey}
+            label="Date"
+            value={form.date}
+            onChange={v => {
+              const selected = new Date(v);
+              const today = new Date();
+              today.setHours(23, 59, 59, 999);
+
+              if (selected > today) {
+                Alert.alert('Invalid Date', 'Future date not accepted');
+                updateField('date', new Date());
+                setDateResetKey(prev => prev + 1);
+                return;
+              }
+
+              updateField('date', v);
+            }}
+          />
+
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginLeft: 20, marginBottom: 12 }}>
+            <CheckBox
+              value={isNonJhEsp}
+              disabled={false}
+              onValueChange={handleNonJhEspChange}
+            /><Text style={styles.label}>Non JH Esp</Text>
+          </View>
+
         </View>
+      </VoiceGuidedField>
 
-      </View>
 
+      <VoiceGuidedField
+        id="espNames"
+        label="enter ESP names"
+        type="text"
+        isMandatory={false}
+        order={6}
+        getValue={() => form.espsname}
+        screenName="Suggestion Form"
+      >
+        <Text>ESP Name's</Text>
 
-      <Text>ESP Name's</Text>
-
-      <TextInput
-        multiline
-        numberOfLines={3}
-        style={styles.textArea}
-        value={form.espsname}
-        onChangeText={v =>
-          updateField('espsname', v)
-        }
-      />
+        <AssistTextInput
+          multiline
+          numberOfLines={3}
+          style={styles.textArea}
+          value={form.espsname}
+          onChangeText={v =>
+            updateField('espsname', v)
+          }
+        />
+      </VoiceGuidedField>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, marginBottom: 12 }}>
         <CheckBox
@@ -656,30 +750,40 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         /><Text style={styles.label}>Mail For Approval</Text>
       </View>
 
-      <View style={styles.buttonWrapper}>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonTop]}
-          onPress={() =>
-            onSavePress('Do you want to save the suggestion?', 'Data saved successfully', 'N')
-          }>
-          <Text style={styles.buttonText}>
-            Save
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonBottom]}
-          onPress={() =>
-            onSavePress(
-              'Submitting will send the suggestion to leader',
-              'Suggestion saved and sent to leader',
-              'Y'
-            )
-          }>
-          <Text style={styles.buttonText}>
-            Save and Send to Leader
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <VoiceGuidedField
+        id="saveButton"
+        label="Tap the save button to save your records"
+        type="button"
+        isMandatory={false}
+        order={7}
+        getValue={() => ''}
+        screenName="Suggestion Form"
+      >
+        <View style={styles.buttonWrapper}>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonTop]}
+            onPress={() =>
+              onSavePress('Do you want to save the suggestion?', 'Data saved successfully', 'N')
+            }>
+            <Text style={styles.buttonText}>
+              Save
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonBottom]}
+            onPress={() =>
+              onSavePress(
+                'Submitting will send the suggestion to leader',
+                'Suggestion saved and sent to leader',
+                'Y'
+              )
+            }>
+            <Text style={styles.buttonText}>
+              Save and Send to Leader
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </VoiceGuidedField>
 
 
 

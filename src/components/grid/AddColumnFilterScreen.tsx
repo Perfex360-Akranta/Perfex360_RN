@@ -1,9 +1,9 @@
+import AssistTextInput from '../forms/AssistTextInput';
 import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   Alert,
   ScrollView,
@@ -245,7 +245,7 @@ navigation.goBack();
         Value
       </Text>
 
-      <TextInput
+      <AssistTextInput
         value={value}
         onChangeText={setValue}
         style={styles.input}

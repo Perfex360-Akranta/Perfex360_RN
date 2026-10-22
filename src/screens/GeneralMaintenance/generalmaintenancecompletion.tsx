@@ -1,3 +1,4 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, { useMemo, useRef, useState } from 'react';
 import {
     View,
@@ -6,13 +7,13 @@ import {
     ScrollView,
     StyleSheet,
     TouchableOpacity,
-    TextInput,
     Alert,
 } from 'react-native';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
 import Cards from '../../components/grid/Cards';
+import FieldAssistBar from '../../components/assist/FieldAssistBar';
 import AppDropdown from '../../components/forms/AppDropdown';
 import DatePicker from '../../components/forms/DatePicker';
 import TimePickerInput from '../../components/forms/TimePickerInput';
@@ -355,7 +356,7 @@ const GeneralMaintenanceCompletion: React.FC = () => {
 
                             <View style={styles.inputGroup}>
                                 <Text style={styles.fieldLabel}>Remarks</Text>
-                                <TextInput
+                                <AssistTextInput
                                     style={styles.textArea}
                                     value={remarks}
                                     onChangeText={setRemarks}
@@ -375,6 +376,7 @@ const GeneralMaintenanceCompletion: React.FC = () => {
                             </TouchableOpacity>
                         </ScrollView>
                     </View>
+                    {showEdit ? <FieldAssistBar hosted /> : null}
                 </View>
             </Modal>
         </View>

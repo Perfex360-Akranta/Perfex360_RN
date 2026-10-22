@@ -1,3 +1,4 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, { useMemo, useRef, useState } from 'react';
 import {
     View,
@@ -6,13 +7,13 @@ import {
     ScrollView,
     StyleSheet,
     TouchableOpacity,
-    TextInput,
     Alert,
 } from 'react-native';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
 import Cards from '../../components/grid/Cards';
+import FieldAssistBar from '../../components/assist/FieldAssistBar';
 import AppDropdown from '../../components/forms/AppDropdown';
 import EquipmentHeaderNew from '../../components/QRscanner/EquipmentHeaderNEW';
 import { EquipmentFnlnDetails } from '../../types/workorder';
@@ -452,7 +453,7 @@ const CltiSchedule: React.FC = () => {
 
                             <View style={styles.inputGroup}>
                                 <Text style={styles.fieldLabel}>Observation</Text>
-                                <TextInput
+                                <AssistTextInput
                                     style={[styles.textArea, !notOk && styles.textAreaDisabled]}
                                     value={observation}
                                     onChangeText={setObservation}
@@ -471,6 +472,7 @@ const CltiSchedule: React.FC = () => {
                             </TouchableOpacity>
                         </ScrollView>
                     </View>
+                    {showEdit ? <FieldAssistBar hosted /> : null}
                 </View>
             </Modal>
         </View>

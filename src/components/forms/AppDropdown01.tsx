@@ -3,11 +3,15 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useCallback,
+  useId,
+  useRef,
 } from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 
 import {Dropdown} from 'react-native-element-dropdown';
 import {getDropdownData} from '../../services/api/dropdownApi';
+import {useFieldAssist} from '../../context/FieldAssistContext';
 
 interface DropdownItem {
   label: string;
@@ -36,6 +40,36 @@ const ApiDropdown = forwardRef(({
   onChange,
 }: Props, ref) => {
   const [data, setData] = useState([]);
+  const { registerField, unregisterField } = useFieldAssist();
+  const id = useId();
+  const dataRef = useRef<any[]>([]);
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+
+  dataRef.current = data;
+  valueRef.current = value;
+  onChangeRef.current = onChange;
+
+  const registerDropdown = useCallback(() => {
+    if (disable) {
+      return;
+    }
+    registerField({
+      id,
+      label: label || 'Dropdown',
+      type: 'dropdown',
+      getValue: () => valueRef.current || '',
+      setText: val => onChangeRef.current?.(val),
+      getOptions: () => dataRef.current,
+      onSelectOption: (val, optLabel) => {
+        onChangeRef.current?.(val);
+      },
+    });
+  }, [disable, id, label, registerField]);
+
+  useEffect(() => {
+    return () => unregisterField(id);
+  }, [id, unregisterField]);
 
   const loadData = async (params?: any) => {
     try {
@@ -102,6 +136,9 @@ const ApiDropdown = forwardRef(({
             search={!disable}
             placeholder="Select"
             value={value}
+            onFocus={() => {
+              registerDropdown();
+            }}
             onChange={item => onChange?.(item.value)}
           />
         </View>

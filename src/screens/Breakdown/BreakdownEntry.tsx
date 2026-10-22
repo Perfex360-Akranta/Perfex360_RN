@@ -1,10 +1,10 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 // import React, { useState } from 'react';
 // import {
 //     View,
 //     Text,
 //     StyleSheet,
-//     TextInput,
-//     TouchableOpacity,
+//     //     TouchableOpacity,
 //     ScrollView,
 //     Alert,
 // } from 'react-native';
@@ -134,7 +134,7 @@
 //                         <Text style={styles.inputLabel}>
 //                             Problem Description <Text style={styles.mandatoryStar}>*</Text>
 //                         </Text>
-//                         <TextInput
+//                         <AssistTextInput
 //                             style={styles.textArea}
 //                             value={problemDescription}
 //                             onChangeText={setProblemDescription}
@@ -288,7 +288,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     ScrollView,
     Alert,
@@ -418,7 +417,7 @@ const BreakdownEntry: React.FC = () => {
                         <Text style={styles.inputLabel}>
                             Problem Description <Text style={styles.mandatoryStar}>*</Text>
                         </Text>
-                        <TextInput
+                        <AssistTextInput
                             style={styles.textArea}
                             value={problemDescription}
                             onChangeText={setProblemDescription}

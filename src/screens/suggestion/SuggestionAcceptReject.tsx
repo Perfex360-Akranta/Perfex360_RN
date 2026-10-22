@@ -1,9 +1,9 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   Modal,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
 import DatePicker from '../../components/forms/DatePicker';
+import FieldAssistBar from '../../components/assist/FieldAssistBar';
 import AppDropdown from '../../components/forms/AppDropdown';
 import Cards from '../../components/grid/Cards';
 import { useGrid } from '../../context/GridProvider';
@@ -182,7 +183,7 @@ const SuggestionAcceptRejectModel: React.FC<ModelProps> = ({
 
           <ScrollView>
             <Text style={styles.fieldLabel}>Suggestion</Text>
-            <TextInput
+            <AssistTextInput
               style={styles.readonlyBox}
               value={record.suggestion || ''}
               editable={false}
@@ -191,7 +192,7 @@ const SuggestionAcceptRejectModel: React.FC<ModelProps> = ({
             />
 
             <Text style={styles.fieldLabel}>Remarks</Text>
-            <TextInput
+            <AssistTextInput
               style={styles.textArea}
               value={remarks}
               onChangeText={setRemarks}
@@ -237,7 +238,7 @@ const SuggestionAcceptRejectModel: React.FC<ModelProps> = ({
             />
 
             <Text style={styles.fieldLabel}>Implementation Cost</Text>
-            <TextInput
+            <AssistTextInput
               style={styles.input}
               value={implementCost}
               onChangeText={setImplementCost}
@@ -274,6 +275,7 @@ const SuggestionAcceptRejectModel: React.FC<ModelProps> = ({
             </TouchableOpacity>
           </ScrollView>
         </View>
+        {visible ? <FieldAssistBar hosted /> : null}
       </View>
     </Modal>
   );

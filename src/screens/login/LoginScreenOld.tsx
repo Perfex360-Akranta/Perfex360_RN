@@ -1,8 +1,8 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, {useState} from 'react';
 import {
     View,
     Text,
-    TextInput,
     Button,
     Alert,
     StyleSheet,
@@ -55,14 +55,14 @@ const LoginScreen = ({navigation}: any) => {
 
             <Text style={styles.title}>Login</Text>
 
-            <TextInput
+            <AssistTextInput
                 placeholder="Username"
                 value={username}
                 onChangeText={setUsername}
                 style={styles.input}
             />
 
-            <TextInput
+            <AssistTextInput
                 placeholder="Password"
                 secureTextEntry
                 value={password}

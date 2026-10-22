@@ -1,8 +1,8 @@
+import AssistTextInput from './AssistTextInput';
 import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
@@ -90,7 +90,7 @@ const DatePicker = ({
 
       <TouchableOpacity disabled={disable}
         onPress={() => setShowPicker(true)}>
-        <TextInput
+        <AssistTextInput
           editable={false}
           value={selectedDate ? formatDate(selectedDate) : ''}
           style={[ styles.input ,disable && styles.inputDisabled]}

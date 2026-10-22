@@ -1,9 +1,9 @@
+import AssistTextInput from '../../components/forms/AssistTextInput';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     ScrollView,
     Alert,
@@ -438,7 +438,7 @@ const GeneralMaintenanceBooking: React.FC = () => {
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Part Location</Text>
-                        <TextInput
+                        <AssistTextInput
                             style={styles.textInput}
                             value={partLocation}
                             onChangeText={text => setPartLocation(text.toUpperCase())}
@@ -500,7 +500,7 @@ const GeneralMaintenanceBooking: React.FC = () => {
                         <Text style={styles.inputLabel}>
                             Problem <Text style={styles.mandatoryStar}>*</Text>
                         </Text>
-                        <TextInput
+                        <AssistTextInput
                             style={styles.textArea}
                             value={problem}
                             onChangeText={text => setProblem(text.toUpperCase())}
@@ -515,7 +515,7 @@ const GeneralMaintenanceBooking: React.FC = () => {
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Action Taken</Text>
-                        <TextInput
+                        <AssistTextInput
                             style={styles.textArea}
                             value={actionTaken}
                             onChangeText={text => setActionTaken(text.toUpperCase())}
@@ -530,7 +530,7 @@ const GeneralMaintenanceBooking: React.FC = () => {
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Root Cause</Text>
-                        <TextInput
+                        <AssistTextInput
                             style={styles.textArea}
                             value={rootCause}
                             onChangeText={text => setRootCause(text.toUpperCase())}
@@ -545,7 +545,7 @@ const GeneralMaintenanceBooking: React.FC = () => {
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Counter Measure</Text>
-                        <TextInput
+                        <AssistTextInput
                             style={styles.textArea}
                             value={counterMeasure}
                             onChangeText={text => setCounterMeasure(text.toUpperCase())}

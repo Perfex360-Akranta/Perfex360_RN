@@ -1,9 +1,9 @@
+import AssistTextInput from '../forms/AssistTextInput';
 import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     Modal,
     Alert,
@@ -12,6 +12,7 @@ import {
 
 } from 'react-native';
 import DatePicker from '../forms/DatePicker';
+import FieldAssistBar from '../assist/FieldAssistBar';
 import AppDropdown from '../forms/AppDropdown';
 
 
@@ -295,7 +296,7 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
                         <>
                             <View style={styles.inputGroup}>
                                 <Text style={styles.inputLabel}>Actual Duration (Mins)</Text>
-                                <TextInput
+                                <AssistTextInput
                                     style={styles.textInput}
                                     value={actualDuration}
                                     keyboardType="numeric"
@@ -307,7 +308,7 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
 
                             <View style={styles.inputGroup}>
                                 <Text style={styles.inputLabel}>Action Taken</Text>
-                                <TextInput
+                                <AssistTextInput
                                     style={styles.textInput}
                                     value={actionTaken}
                                     onChangeText={setActionTaken}
@@ -316,7 +317,7 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
 
                             <View style={styles.inputGroup}>
                                 <Text style={styles.inputLabel}>Observation</Text>
-                                <TextInput
+                                <AssistTextInput
                                     style={styles.remarksInput}
                                     value={observation}
                                     multiline
@@ -351,7 +352,7 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
                                 <>
                                     <View style={styles.inputGroup}>
                                         <Text style={styles.inputLabel}>CBM Reading</Text>
-                                        <TextInput
+                                        <AssistTextInput
                                             style={styles.textInput}
                                             value={cbmReadingValue}
                                             keyboardType="numeric"
@@ -363,7 +364,7 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
 
                                     <View style={styles.inputGroup}>
                                         <Text style={styles.inputLabel}>Adjusted Reading</Text>
-                                        <TextInput
+                                        <AssistTextInput
                                             style={styles.textInput}
                                             value={cbmAdjustedReadingValue}
                                             keyboardType="numeric"
@@ -404,6 +405,7 @@ const WorkOrderCompletionModel: React.FC<WorkOrderCompletionModelProps> = ({
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
                 <View style={styles.modalWrapper}>{content}</View>
+                {visible ? <FieldAssistBar hosted /> : null}
             </View>
         </Modal>
     );
