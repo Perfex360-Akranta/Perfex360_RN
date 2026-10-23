@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface Props {
   label?: string;
@@ -21,6 +22,9 @@ const MonthPicker = ({
   disable = false,
   onChange,
 }: Props) => {
+
+  const { colors, resolvedMode } = useAppTheme(); 
+
   const [showPicker, setShowPicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value);
 
@@ -65,16 +69,31 @@ const MonthPicker = ({
   return (
     <View style={styles.container}>
       
-      {label && (<Text style={styles.label}>
+      {label && (<Text style={[styles.label,{ color: colors.text },]}>
         {label}
       </Text> )}
 
-      <TouchableOpacity disabled={disable}
+      <TouchableOpacity disabled={disable} activeOpacity={0.7}
         onPress={() => setShowPicker(true)}>
         <AssistTextInput
           editable={false}
           value={selectedDate ? formatDate(selectedDate) : ''}
-          style={styles.input}
+          // style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+            disable && [
+              styles.inputDisabled,
+              {
+                backgroundColor: colors.disabled,
+                borderColor: colors.border,
+              },
+            ],
+          ]}
         />
       </TouchableOpacity>
 
@@ -84,6 +103,8 @@ const MonthPicker = ({
           mode="date"
           display="default"
           onValueChange={handleChange}
+          themeVariant={resolvedMode}
+          accentColor={colors.primary}
         />
       )}
     </View>
@@ -109,6 +130,11 @@ const styles = StyleSheet.create({
     marginRight:10,
     backgroundColor: '#fff',
   },
+  inputDisabled: {
+  backgroundColor: '#f2f2f2',
+  borderColor: '#d0d0d0',
+  opacity: 0.7,
+},
 });
 
 export default MonthPicker;

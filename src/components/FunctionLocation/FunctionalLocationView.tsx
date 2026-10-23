@@ -9,6 +9,7 @@ import {
 import FunctionalLocationFilter from './FunctionalLocationFilter';
 import { get } from '../../services/axiosService';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import { useAppTheme } from '../../theme/ThemeContext';
 interface FunctionalLocation {
   companyId: string;
   company?: string;
@@ -54,6 +55,7 @@ export default function FunctionalLocationView({
 }: FunctionalLocationViewProps) {
 
 
+  const { colors } = useAppTheme();
   const [showFunctionalLocation, setShowFunctionalLocation] = useState(false);
   //const [functionalLocation, setFunctionalLocation] = useState("COMPANY");
 
@@ -166,17 +168,17 @@ const [form, setForm] = useState<FunctionalLocation>({
   return (
     <View >
     <View style={{ flexDirection: 'row',alignItems: 'center' }}>
-          <Text style={styles.label}>Functional Location</Text>
+          <Text style={[styles.label,{color:colors.text}]}>Functional Location</Text>
           <TouchableOpacity
-      style={styles.arrowButton}
+      style={[styles.arrowButton,{backgroundColor:colors.primary,shadowColor:colors.shadow}]}
       onPress={() => setShowFunctionalLocation(true)}
     >
        <MaterialIcons
         name="arrow-forward"
         size={20}
-        color="#FFFFFF"
+        color={colors.surface}
     />
-      {/* <Text>➜</Text> */}
+      
     </TouchableOpacity>
     </View>
     <FunctionalLocationFilter
@@ -190,74 +192,70 @@ const [form, setForm] = useState<FunctionalLocation>({
       }}
       validate={validate}
     />
-    <View style={styles.hierarchyContainer}>
+    <View style={[styles.hierarchyContainer,{backgroundColor:colors.surface,borderColor:colors.border}]}>
 
   {form.company && (
     <TouchableOpacity onPress={() => setShowFunctionalLocation(true)}>
-      <Text style={styles.link}>{form.company}</Text>
+      <Text style={[styles.link,{color:colors.primary}]}>{form.company}</Text>
     </TouchableOpacity>
   )}
 
   {form.location && (
     <>
-      <Text style={styles.separator}> / </Text>
+      <Text style={[styles.separator,{color:colors.textSecondary}]}> / </Text>
       <TouchableOpacity onPress={() => setShowFunctionalLocation(true)}>
-        <Text style={styles.link}>{form.location}</Text>
+        <Text style={[styles.link,{color:colors.primary}]}>{form.location}</Text>
       </TouchableOpacity>
     </>
   )}
 
   {form.sbu && (
     <>
-      <Text style={styles.separator}> / </Text>
+      <Text style={[styles.separator,{color:colors.textSecondary}]}> / </Text>
       <TouchableOpacity onPress={() => setShowFunctionalLocation(true)}>
-        <Text style={styles.link}>{form.sbu}</Text>
+        <Text style={[styles.link,{color:colors.primary}]}>{form.sbu}</Text>
       </TouchableOpacity>
     </>
   )}
 
   {form.pbu && (
     <>
-      <Text style={styles.separator}> / </Text>
+      <Text style={[styles.separator,{color:colors.textSecondary}]}> / </Text>
       <TouchableOpacity onPress={() =>setShowFunctionalLocation(true)}>
-        <Text style={styles.link}>{form.pbu}</Text>
+        <Text style={[styles.link,{color:colors.primary}]}>{form.pbu}</Text>
       </TouchableOpacity>
     </>
   )}
 
   {form.section && (
     <>
-      <Text style={styles.separator}> / </Text>
+      <Text style={[styles.separator,{color:colors.textSecondary}]}> / </Text>
       <TouchableOpacity onPress={() => setShowFunctionalLocation(true)}>
-        <Text style={styles.link}>{form.section}</Text>
+        <Text style={[styles.link,{color:colors.primary}]}>{form.section}</Text>
       </TouchableOpacity>
     </>
   )}
 
   {form.cell && (
     <>
-      <Text style={styles.separator}> / </Text>
+      <Text style={[styles.separator,{color:colors.textSecondary}]}> / </Text>
       <TouchableOpacity onPress={() => setShowFunctionalLocation(true)}>
-        <Text style={styles.link}>{form.cell}</Text>
+        <Text style={[styles.link,{color:colors.primary}]}>{form.cell}</Text>
       </TouchableOpacity>
     </>
   )}
 
   {form.machine && (
     <>
-      <Text style={styles.separator}> / </Text>
+      <Text style={[styles.separator,{color:colors.textSecondary}]}> / </Text>
       <TouchableOpacity onPress={() => setShowFunctionalLocation(true)}>
-        <Text style={styles.link}>{form.machine}</Text>
+        <Text style={[styles.link,{color:colors.primary}]}>{form.machine}</Text>
       </TouchableOpacity>
     </>
   )}
 
 </View>
-          {/* <TextInput
-            style={styles.input}
-            readOnly={true}
-            value={functionalLocation}
-          /> */}
+      
           </View>
   );
 }

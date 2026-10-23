@@ -12,6 +12,7 @@ import AppDropdown from '../forms/AppDropdown';
 import { get } from '../../services/axiosService';
 import { useGrid } from '../../context/GridProvider';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface FunctionalLocation {
   companyId: string;
@@ -58,6 +59,8 @@ export default function FunctionalLocationFilter({
   onSelect,
   validate,
 }: FunctionalLocationViewProps) {
+
+  const { colors } = useAppTheme();
 
   const locationRef = useRef<any>(null);
   const sbuRef = useRef<any>(null);
@@ -366,7 +369,10 @@ loadFunctionalLocation(value, undefined);
       
 
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View style={[
+    styles.container,
+    { backgroundColor: colors.background },
+  ]}>
 {/* <TouchableOpacity
   style={styles.closeButton}
   onPress={onClose}
@@ -381,7 +387,7 @@ loadFunctionalLocation(value, undefined);
   {/* <Text style={styles.closeText}>✕</Text> */}
   <MaterialIcons name="close" size={24} color="white"/>
 </TouchableOpacity>
-          <Text style={styles.title}>
+          <Text style={[styles.title,{color:colors.text}]}>
             Functional Location
           </Text>
 

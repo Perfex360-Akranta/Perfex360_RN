@@ -25,7 +25,7 @@ const LoginScreen = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 const [showServerModal, setShowServerModal] = useState(false);
-
+const { colors, themeMode, setThemeMode } = useAppTheme();
 const { setCurrentUser, setCurrentRole} = useGrid();
 const { closeAssist } = useFieldAssist();
 
@@ -115,14 +115,20 @@ useEffect(() => {
             Integrated. Intelligent. Impactful.
           </Text>
 
-          <View style={styles.card}>
+          <View style={[
+    styles.card,
+    { backgroundColor: colors.surface },
+  ]}>
 
 <ServerConfigModal
   visible={showServerModal}
   onClose={() => setShowServerModal(false)}
 />
 
-            <Text style={styles.cardTitle}>
+            <Text style={[
+    styles.cardTitle,
+    { color: colors.primary },
+  ]}>
               Login to Perfex
             </Text>
 
@@ -141,7 +147,14 @@ useEffect(() => {
               secureTextEntry
               value={password}
               onChangeText={setPassword}
-              style={styles.input}
+              style={[
+    styles.input,
+    {
+      color: colors.text,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+  ]}
             />
 
             <TouchableOpacity

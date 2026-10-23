@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { setApiConfig } from './src/context/ApiConfig';
 import { setupAuthInterceptor } from './src/services/axios/authInterceptor';
+import { ThemeProvider } from './src/theme/ThemeContext';
 //enableScreens(true);
 const Drawer = createDrawerNavigator();
 
@@ -23,6 +24,7 @@ function App() {
   
 useEffect(() => {
     const load = async () => {
+      try {
         const config = await getApiConfig();
 
         setApiConfig(
@@ -31,6 +33,16 @@ useEffect(() => {
             config.app
         );
         setupAuthInterceptor();
+
+      
+      } catch (error) {
+
+        console.error(
+          'Error loading API configuration:',
+          error
+        );
+
+      }
     };
 
     load();
