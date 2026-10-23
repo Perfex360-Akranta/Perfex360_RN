@@ -12,6 +12,7 @@ import { useGrid } from '../../context/GridProvider';
 import DatePicker from '../../components/forms/DatePicker';
 import AppDropdown from '../../components/forms/AppDropdown';
 import { getCurrentShift } from '../../services/api/authApi';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 type CardItem = {
   title: string;
@@ -110,7 +111,7 @@ export default function HomeScreen({ navigation }: any) {
   const [date, setDate] = useState(new Date());
   const [shift, setShift] = useState('');
   const { currentUser, currentRole } = useGrid();
-
+const { colors } = useAppTheme();
   const loadShift = async () => {
     try {
       const result = await getCurrentShift();
@@ -125,26 +126,35 @@ export default function HomeScreen({ navigation }: any) {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[
+    styles.container,
+    { backgroundColor: colors.background },
+  ]}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
 
         {/* Welcome / identity card */}
-        <View style={styles.welcomeCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
+        <View style={[
+    styles.welcomeCard,
+    { backgroundColor: colors.surface },
+  ]}>
+          <View style={[
+      styles.avatar,
+      { backgroundColor: colors.avatar },
+    ]}>
+            <Text style={[styles.avatarText, { color: colors.text }]}>
               {getInitials(currentUser?.userName)}
             </Text>
           </View>
 
           <View style={styles.welcomeText}>
-            <Text style={styles.eyebrow}>Welcome back</Text>
-            <Text style={styles.userName} numberOfLines={1}>
+            <Text style={[styles.eyebrow, { color: colors.textMuted }]}>Welcome back</Text>
+            <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
               {currentUser?.userName}
             </Text>
-            <View style={styles.rolePill}>
-              <Text style={styles.rolePillText} numberOfLines={1}>
+            <View style={[styles.rolePill,{ backgroundColor: colors.rolePill },]}>
+              <Text style={[styles.rolePillText, { color: colors.roleText }]} numberOfLines={1}>
                 {currentRole?.roleName} · {currentRole?.fnlnDescription}
               </Text>
             </View>
@@ -152,8 +162,8 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* Shift / date filter card */}
-        <View style={styles.filterCard}>
-          <Text style={styles.filterLabel}>Current shift</Text>
+        <View style={[styles.filterCard, { backgroundColor: colors.surface, borderColor: colors.border,}, ]}>
+          <Text style={[styles.filterLabel,{ color: colors.textSecondary },]}>Current shift</Text>
           <View style={styles.row}>
             <View style={styles.filterField}>
               <DatePicker label="Date" disable={true} value={date} />
@@ -172,7 +182,67 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Grouped action sections — each is a tinted band with
             compact icon + label rows for that section's actions. */}
-        {groups.map(group => (
+            {groups.map((group, groupIndex) => {
+  const bandColors = [
+    colors.bands.overview,
+    colors.bands.abnormality,
+    colors.bands.suggestion,
+    colors.bands.breakdown,
+    colors.bands.maintenance,
+    colors.bands.workOrder,
+    colors.bands.clti,
+  ];
+  const bandIconColors = [
+  colors.bandIcons.overview,
+  colors.bandIcons.abnormality,
+  colors.bandIcons.suggestion,
+  colors.bandIcons.breakdown,
+  colors.bandIcons.maintenance,
+  colors.bandIcons.workOrder,
+  colors.bandIcons.clti,
+];
+
+  return (
+    <View
+      key={group.label}
+      style={[
+        styles.band,
+        { backgroundColor: bandColors[groupIndex] ?? colors.surfaceSecondary,borderColor: colors.border, },
+      ]}
+    >
+      {/* Keep your existing group heading and navigation rows */}
+          <View style={styles.bandHeadRow}>
+              <View style={[styles.bandDot, { backgroundColor: bandIconColors[groupIndex] ?? colors.icon, }]} />
+              <Text style={[styles.bandTitle,{ color: colors.text },]}>{group.label.toUpperCase()}</Text>
+            </View>
+
+            {group.items.map((item, idx) => (
+              <TouchableOpacity
+                key={item.title}
+                onPress={() => navigation.navigate(item.screen)}
+                activeOpacity={0.7}
+                style={[
+                  styles.listRow,
+                  idx === group.items.length - 1 && styles.listRowLast,
+                ]}>
+                <View style={[styles.rowIcon,{ backgroundColor: colors.surface },]}>
+                  <MaterialIcons name={item.icon as any} color={colors.icon} size={18} />
+                </View>
+
+                <View style={styles.rowTextWrap}>
+                  <Text style={[styles.rowTitle, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[ styles.rowSub,{ color: colors.textSecondary },]} numberOfLines={1}>
+                    {item.subtitle}
+                  </Text>
+                </View>
+
+                <MaterialIcons name="chevron-right"  color={colors.iconSecondary} size={20} />
+              </TouchableOpacity>
+            ))}
+    </View>
+  );
+})}
+        {/* {groups.map(group => (
           <View
             key={group.label}
             style={[styles.band, { backgroundColor: group.band }]}>
@@ -205,7 +275,7 @@ export default function HomeScreen({ navigation }: any) {
               </TouchableOpacity>
             ))}
           </View>
-        ))}
+        ))} */}
       </ScrollView>
     </View>
   );
@@ -323,6 +393,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderRadius: 18,
     padding: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
 
   bandHeadRow: {

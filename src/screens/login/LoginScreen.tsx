@@ -18,13 +18,14 @@ import { saveUser } from '../../services/storage/userStorage';
 import { saveToken } from '../../services/storage/tokenStorage';
 import ServerConfigModal from '../../components/model/ServerConfigModel';
 import { useGrid } from '../../context/GridProvider';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 const [showServerModal, setShowServerModal] = useState(false);
-
+const { colors, themeMode, setThemeMode } = useAppTheme();
 const { setCurrentUser, setCurrentRole} = useGrid();
 
   const onLogin = async () => {
@@ -109,30 +110,52 @@ const { setCurrentUser, setCurrentRole} = useGrid();
             Integrated. Intelligent. Impactful.
           </Text>
 
-          <View style={styles.card}>
+          <View style={[
+    styles.card,
+    { backgroundColor: colors.surface },
+  ]}>
 
 <ServerConfigModal
   visible={showServerModal}
   onClose={() => setShowServerModal(false)}
 />
 
-            <Text style={styles.cardTitle}>
+            <Text style={[
+    styles.cardTitle,
+    { color: colors.primary },
+  ]}>
               Login to Perfex
             </Text>
 
             <TextInput
               placeholder="Username"
+              placeholderTextColor={colors.textSecondary}
               value={username}
               onChangeText={setUsername}
-              style={styles.input}
+              style={[
+    styles.input,
+    {
+      color: colors.text,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+  ]}
             />
 
             <TextInput
               placeholder="Password"
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
-              style={styles.input}
+              style={[
+    styles.input,
+    {
+      color: colors.text,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+  ]}
             />
 
             <TouchableOpacity

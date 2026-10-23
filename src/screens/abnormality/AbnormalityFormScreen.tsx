@@ -17,6 +17,7 @@ import FunctionalLocationView from '../../components/FunctionLocation/Functional
 import { saveAbnormality } from '../../services/api/abnormalityApi';
 import { useGrid } from '../../context/GridProvider';
 import { formatLocalDateTime, getCurrentDateTime, PASS_NULL_DATETIME } from '../../utils/DateFormat';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 
 interface AbnormalityForm {
@@ -102,6 +103,9 @@ interface AbnormalityForm {
 
 
 export default function AbnormalityFormScreen() {
+
+
+  const { colors } = useAppTheme();
 
   const { currentUser, currentRole} = useGrid();
 const [isDetectedBy, setDetectedBy] = useState(false);
@@ -360,7 +364,10 @@ const handleDetectedByChange = (newValue:any) => {
  
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[
+    styles.container,
+    { backgroundColor: colors.background },
+  ]}>
 
       {/* <Text style={styles.heading}>
         Abnormality Identification

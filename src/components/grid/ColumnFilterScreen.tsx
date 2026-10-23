@@ -15,6 +15,7 @@ import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { useGrid } from '../../context/GridProvider';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface ColumnFilter {
   id: number;
@@ -35,6 +36,7 @@ type NavigationProp = NativeStackNavigationProp<
 
 export default function ColumnFilterScreen() {
 
+  const { colors } = useAppTheme();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<any>();
 
@@ -202,21 +204,21 @@ navigation.goBack();
 
   const CardItem = ({ item }: { item: ColumnFilter }) => (
 
-    <View style={styles.card}>
+    <View style={[styles.card,{backgroundColor: colors.surface,borderColor: colors.border,shadowColor: colors.shadow,}]}>
 
       <View 
      style={{ flex: 1 }}
       >
 
-        <Text style={styles.column}>
+        <Text style={[styles.column,{color: colors.text,}]}>
           {item.columnName}
         </Text>
 
-        <Text style={styles.condition}>
+        <Text style={[styles.condition,{color: colors.textSecondary,}]}>
           {item.condition}
         </Text>
 
-        <Text style={styles.value}>
+        <Text style={[styles.value,{color: colors.text,}]}>
           {item.value}
         </Text>
 
@@ -228,7 +230,7 @@ navigation.goBack();
 
         <MaterialIcons
           name="edit"
-          color="#2196F3"
+          color={colors.primary}
           size={24}
         />
 
@@ -241,7 +243,7 @@ navigation.goBack();
 
         <MaterialIcons
           name="delete"
-          color="red"
+          color="#D32F2F"
           size={24}
         />
 
@@ -253,15 +255,11 @@ navigation.goBack();
 
   return (
 
-    <View 
-    style={styles.container} 
-       >
+    <View  style={[styles.container,{backgroundColor: colors.background,}]} >
 
-      <View  
-   
- >
+      <View>
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton,{backgroundColor: colors.primary,}]}
         onPress={addFilter}
       >
 

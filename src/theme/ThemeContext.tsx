@@ -15,8 +15,11 @@ import {
   ThemeMode,
 } from './themeConfig';
 
+type ResolvedThemeMode = 'light' | 'dark';
+
 type ThemeContextType = {
   themeMode: ThemeMode;
+   resolvedMode: ResolvedThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
   colors: (typeof themeConfig)['light'] | (typeof themeConfig)['dark'];
 };
@@ -57,18 +60,27 @@ export function ThemeProvider({
     );
   };
 
-  const colors =
+  const resolvedMode: ResolvedThemeMode =
     themeMode === 'system'
       ? systemScheme === 'dark'
-        ? themeConfig.dark
-        : themeConfig.light
-      : themeMode === 'dark'
-        ? themeConfig.dark
-        : themeConfig.light;
+        ? 'dark'
+        : 'light'
+      : themeMode;
+
+  const colors = themeConfig[resolvedMode];
+
+  // const colors =
+  //   themeMode === 'system'
+  //     ? systemScheme === 'dark'
+  //       ? themeConfig.dark
+  //       : themeConfig.light
+  //     : themeMode === 'dark'
+  //       ? themeConfig.dark
+  //       : themeConfig.light;
 
   const value = useMemo(
-    () => ({ themeMode, setThemeMode, colors }),
-    [themeMode, colors],
+    () => ({ themeMode, resolvedMode, setThemeMode, colors }),
+    [themeMode, resolvedMode],
   );
 
   return (

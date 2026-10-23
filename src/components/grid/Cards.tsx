@@ -20,6 +20,7 @@ import { CardItemProps, DynamicGridProps, GridFilterProps } from '../../types/Gr
 import { Column } from '../../types/GridFilters';
 import { useGrid } from '../../context/GridProvider';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 
 
@@ -43,7 +44,7 @@ const Cards = forwardRef(({
 
 
 
-
+const {colors} = useAppTheme();
   const [flid, setFlid] = useState("FNL000000001");
   const [data, setData] = useState<ApiRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -468,34 +469,39 @@ const Cards = forwardRef(({
       formatted?.showIcon !== false && !!formatted?.icon;
 
     return (
-      <View style={styles.row} key={field}>
-        <Text style={styles.label}>
+      <View style={[
+      styles.row,
+      {borderBottomColor: colors.border},
+    ]} key={field}>
+        <Text style={[
+        styles.label,
+        {color: colors.textSecondary},
+      ]}>
           {headerRow[field] || field}
         </Text>
 
         <View
           style={[
-            styles.valueContainer,
-            formatted?.backgroundColor
-              ? { backgroundColor: formatted.backgroundColor }
-              : null,
-          ]}
+        styles.valueContainer,
+        {
+          backgroundColor:
+            formatted?.backgroundColor ?? 'transparent',
+        },
+      ]}
         >
           {showIcon && (
             <MaterialIcons
               name={formatted!.icon as any}
               size={18}
-              color={formatted?.iconColor || formatted?.textColor || '#333'}
+              color={formatted?.iconColor || formatted?.textColor || colors.text}
             />
           )}
 
           <Text
             style={[
-              styles.value,
-              formatted?.textColor
-                ? { color: formatted.textColor }
-                : null,
-            ]}
+          styles.value,
+          {color: formatted?.textColor ?? colors.text},
+        ]}
           >
             {displayText}
           </Text>
@@ -505,7 +511,13 @@ const Cards = forwardRef(({
   };
 
   return (
-    <View style={styles.card}>
+    <View style={[
+      styles.card,
+      {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+      },
+    ]}>
       {/* Mandatory Fields */}
       {mandatoryFields.map(field => renderField(field))}
 
@@ -528,7 +540,7 @@ const Cards = forwardRef(({
             }
             style={styles.editBtn}
           >
-            <Text style={styles.editText}>Edit</Text>
+            <Text style={[styles.editText, {color: colors.header}]}>Edit</Text>
           </TouchableOpacity>
         )}
 
@@ -537,7 +549,7 @@ const Cards = forwardRef(({
             onPress={() => setExpanded(!expanded)}
             style={styles.viewMoreBtn}
           >
-            <Text style={styles.viewMoreText}>
+            <Text style={[styles.viewMoreText, {color: colors.primary}]}>
               {expanded ? 'View Less' : 'View More'}
             </Text>
           </TouchableOpacity>
@@ -550,20 +562,26 @@ const Cards = forwardRef(({
 
   if (loading) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" />
+      <View style={[
+        styles.loader,
+        {backgroundColor: colors.background},
+      ]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{flex: 1, backgroundColor: colors.background}}>
     <FlatList
       data={data}
       //renderItem={renderCard}
       renderItem={({ item , index }) => <CardItem item={item} index={index} formatField={formatField} />}
       keyExtractor={(_, index) => index.toString()}
-      contentContainerStyle={styles.listContainer}
+      contentContainerStyle={[
+        styles.listContainer,
+        {backgroundColor: colors.background},
+      ]}
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
@@ -585,7 +603,7 @@ const Cards = forwardRef(({
   ListFooterComponent={
     loadingMore ? (
       <View style={{ padding: 15 }}>
-        <ActivityIndicator size="small" />
+        <ActivityIndicator size="small" color={colors.primary} />
       </View>
     ) : null
   }

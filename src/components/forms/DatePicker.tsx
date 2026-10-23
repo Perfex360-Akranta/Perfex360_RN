@@ -5,8 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface Props {
   label?: string;
@@ -23,12 +25,14 @@ const DatePicker = ({
   disable = false,
   onChange,
 }: Props) => {
+
+  const { colors, resolvedMode } = useAppTheme();
+
   const [showPicker, setShowPicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(value);
 
 
      useEffect(() => {
-      //setSelectedDate(value ?? undefined);
       if (!value) {
     setSelectedDate(undefined);
     return;
@@ -84,16 +88,33 @@ const DatePicker = ({
   return (
     <View style={shared ? styles.sharedContainer : styles.container}>
       
-      {label && (<Text style={styles.label}>
+      {label && (<Text style={[styles.label,{ color: colors.text },]}>
         {label}
       </Text> )}
 
-      <TouchableOpacity disabled={disable}
+      <TouchableOpacity disabled={disable} activeOpacity={0.7}
         onPress={() => setShowPicker(true)}>
         <TextInput
           editable={false}
           value={selectedDate ? formatDate(selectedDate) : ''}
-          style={[ styles.input ,disable && styles.inputDisabled]}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+            disable && [
+              styles.inputDisabled,
+              {
+                backgroundColor: colors.disabled,
+                borderColor: colors.border,
+              },
+            ],
+          ]}
+          pointerEvents="none"
+          placeholder="Select date"
+          placeholderTextColor={colors.textMuted}
         />
       </TouchableOpacity>
 
@@ -103,6 +124,9 @@ const DatePicker = ({
           mode="date"
           display="default"
           onValueChange={handleChange}
+          themeVariant={resolvedMode}
+          accentColor={colors.primary}
+          // onChange={handleChange}
         />
       )}
     </View>
@@ -121,14 +145,24 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 5,
     fontWeight: '600',
+    fontSize: 13,
   },
-  input: {
+  // input: {
+  //   borderWidth: 1,
+  //   borderColor: '#ccc',
+  //   borderRadius: 5,
+  //   padding: 5,
+  //   marginRight:10,
+  //   backgroundColor: '#fff',
+  // },
+   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 5,
-    marginRight:10,
-    backgroundColor: '#fff',
+    borderRadius: 7,
+    paddingHorizontal: 10,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 5,
+    marginRight: 10,
+    fontSize: 13,
+    minHeight: 38,
   },
   inputDisabled: {
   backgroundColor: '#f2f2f2',

@@ -16,6 +16,7 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useGrid } from '../../context/GridProvider';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface Column {
   key: string;
@@ -39,6 +40,7 @@ type NavigationProp = NativeStackNavigationProp<
 
 export default function AddColumnFilterScreen() {
 
+  const { colors } = useAppTheme();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProp<any>>();
 
@@ -181,22 +183,24 @@ navigation.goBack();
   return (
 
     <ScrollView
-      style={styles.container}
+      style={[styles.container,{backgroundColor: colors.background,}]}
       contentContainerStyle={{ paddingBottom: 40 }}>
 
-      <Text style={styles.title}>
+      <Text style={[styles.title,{color: colors.text,}]}>
         Add Column Filter
       </Text>
 
-      <Text style={styles.label}>
+      <Text style={[styles.label,{color: colors.text,}]}>
         Column
       </Text>
 
-      <View style={styles.pickerContainer}>
+      <View style={[styles.pickerContainer,{borderColor: colors.border,backgroundColor: colors.surface,}]}>
 
         <Picker
           selectedValue={columnKey}
-          onValueChange={onColumnChanged}>
+          onValueChange={onColumnChanged}
+          style={{color: colors.text,backgroundColor: colors.surface,}}
+          dropdownIconColor={colors.text}>
 
           <Picker.Item
             label="Select Column"
@@ -217,7 +221,7 @@ navigation.goBack();
 
       </View>
 
-      <Text style={styles.label}>
+      <Text style={[styles.label,{color: colors.text,}]}>
         Condition
       </Text>
 
@@ -225,8 +229,10 @@ navigation.goBack();
 
         <Picker
           selectedValue={condition}
-          onValueChange={setCondition}>
-
+          onValueChange={setCondition}
+          style={{color: colors.text,backgroundColor: colors.surface,}}
+          dropdownIconColor={colors.text}>
+          
           {conditions.map(item => (
 
             <Picker.Item
@@ -241,19 +247,21 @@ navigation.goBack();
 
       </View>
 
-      <Text style={styles.label}>
+      <Text style={[styles.label,{color: colors.text,}]}>
         Value
       </Text>
 
       <TextInput
         value={value}
         onChangeText={setValue}
-        style={styles.input}
+        style={[styles.input,{borderColor: colors.border,color: colors.text,backgroundColor: colors.surface,}]}
         placeholder="Enter Value"
+        placeholderTextColor={colors.textSecondary}
+        selectionColor={colors.primary}
       />
 
       <TouchableOpacity
-        style={styles.saveButton}
+        style={[styles.saveButton,{backgroundColor: colors.primary,}]}
         onPress={saveFilter}>
 
         <Text style={styles.saveText}>
@@ -263,10 +271,10 @@ navigation.goBack();
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.cancelButton}
+        style={[styles.cancelButton,{backgroundColor: colors.surfaceSecondary, borderColor: colors.border,}]}
         onPress={() => navigation.goBack()}>
 
-        <Text style={styles.cancelText}>
+        <Text style={[styles.cancelText,{color: colors.text,}]}>
           Cancel
         </Text>
 

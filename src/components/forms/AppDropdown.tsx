@@ -16,6 +16,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 
 import {getDropdownData} from '../../services/api/dropdownApi';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface DropdownItem {
   label: string;
@@ -43,6 +44,8 @@ const AppDropdown = forwardRef(({
   disable = false,
   onChange,
 }: Props, ref) => {
+
+  const { colors } = useAppTheme();
 
   const [data, setData] = useState<DropdownItem[]>([]);
 
@@ -78,6 +81,58 @@ const AppDropdown = forwardRef(({
     onChange?.('');
   };
 
+  const themedStyles = StyleSheet.create({
+    label: {
+      color: colors.text,
+    },
+
+    dropdown: {
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+
+    dropdownSelected: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+    },
+
+    dropdownDisabled: {
+      backgroundColor: colors.disabled,
+      borderColor: colors.border,
+    },
+
+    placeholderStyle: {
+      color: colors.textMuted,
+    },
+
+    selectedTextStyle: {
+      color: colors.text,
+    },
+
+    disabledText: {
+      color: colors.textSecondary,
+    },
+
+    itemTextStyle: {
+      color: colors.text,
+    },
+
+    dropdownContainer: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+
+    itemContainer: {
+      backgroundColor: colors.surface,
+    },
+
+    clearButton: {
+      backgroundColor: colors.surfaceSecondary,
+    },
+  });
+
+
   return (
     <View style={styles.container}>
 
@@ -85,6 +140,7 @@ const AppDropdown = forwardRef(({
         <Text
           style={[
             styles.label,
+            themedStyles.label,
             manditory && styles.mandatoryLabel,
           ]}>
           {label}
@@ -98,20 +154,32 @@ const AppDropdown = forwardRef(({
           maxHeight={400}
           style={[
             styles.dropdown,
-            disable && styles.dropdownDisabled,
-            value && !disable && styles.dropdownSelected,
+            themedStyles.dropdown,
+            disable && [styles.dropdownDisabled,themedStyles.dropdownDisabled,],
+            value && !disable && [styles.dropdownSelected,themedStyles.dropdownSelected,],
           ]}
           placeholderStyle={[
             styles.placeholderStyle,
-            disable && styles.disabledText,
+            themedStyles.placeholderStyle,
+            disable && themedStyles.disabledText,
           ]}
           selectedTextStyle={[
             styles.selectedTextStyle,
-            disable && styles.disabledText,
+            themedStyles.selectedTextStyle,
+            disable && themedStyles.disabledText,
           ]}
-          itemTextStyle={styles.itemTextStyle}
-          containerStyle={styles.dropdownContainer}
-          itemContainerStyle={styles.itemContainer}
+          itemTextStyle={[
+            styles.itemTextStyle,
+            themedStyles.itemTextStyle,
+          ]}
+          containerStyle={[
+            styles.dropdownContainer,
+            themedStyles.dropdownContainer,
+          ]}
+          itemContainerStyle={[
+            styles.itemContainer,
+            themedStyles.itemContainer,
+          ]}
 
           data={data}
           labelField="label"
@@ -132,13 +200,13 @@ const AppDropdown = forwardRef(({
 
               {value && !disable && (
                 <TouchableOpacity
-                  style={styles.clearButton}
+                  style={[styles.clearButton,themedStyles.clearButton,]}
                   onPress={handleClear}
                   activeOpacity={0.6}>
                   <MaterialIcons
                     name="close"
                     size={17}
-                    color="#777"
+                    color={colors.iconSecondary}
                   />
                 </TouchableOpacity>
               )}
@@ -146,7 +214,7 @@ const AppDropdown = forwardRef(({
               <MaterialIcons
                 name="keyboard-arrow-down"
                 size={21}
-                color={disable ? '#aaa' : '#555'}
+                color={disable ? colors.textMuted : colors.icon}
               />
 
             </View>

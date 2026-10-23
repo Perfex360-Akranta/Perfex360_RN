@@ -16,6 +16,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { useGrid } from '../../context/GridProvider';
+import { useAppTheme } from '../../theme/ThemeContext';
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   'Home'
@@ -40,6 +41,7 @@ export default function Footer({
 }: FooterProps){
 
   const { filter, setFilter } = useGrid(); 
+  const {colors} = useAppTheme();
 
     const [showGridFilters, setShowGridFilters] = useState(false);
     
@@ -54,7 +56,13 @@ const Refresh = ( ) => {
   };
 
  return(
-<View style={styles.footer}>
+<View style={[
+        styles.footer,
+        {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+        },
+      ]}>
 
 
 

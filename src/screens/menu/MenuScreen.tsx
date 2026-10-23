@@ -12,6 +12,7 @@ import TreeItem from '../../components/forms/MenuTreeComponent';
 import {getMenuData} from '../../services/api/menuApi';
 import {useGrid} from '../../context/GridProvider';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 
 interface MenuItem {
@@ -28,6 +29,7 @@ interface MenuItem {
 const MenuScreen = ({navigation}: any) => {
 
   const {currentUser} = useGrid();
+   const {colors} = useAppTheme();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -274,8 +276,11 @@ console.log(
 
 if (loading) {
   return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#35DFA8" />
+    <View style={[
+        styles.loadingContainer,
+        {backgroundColor: colors.background},
+      ]}>
+      <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
 }
@@ -291,7 +296,7 @@ if (loading) {
     //   ))}
     // </ScrollView>
 
-     <View style={styles.drawer}>
+     <View style={[styles.drawer, {backgroundColor: colors.background}]}>
     <ScrollView
       style={styles.scrollView}
       contentContainerStyle={styles.menuContent}
@@ -299,7 +304,13 @@ if (loading) {
     >
       {/* Fixed Home menu */}
       <TouchableOpacity
-        style={styles.fixedMenuRow}
+        style={[
+          styles.fixedMenuRow,
+          {
+            backgroundColor: colors.surfaceSecondary,
+            borderBottomColor: colors.border,
+          },
+        ]}
         activeOpacity={0.7}
         onPress={() => {
           navigation.closeDrawer();
@@ -311,14 +322,20 @@ if (loading) {
         <MaterialIcons
           name="home"
           size={21}
-          color="#35DFA8"
+          color={colors.primary}
         />
-        <Text style={styles.fixedMenuText}>Home</Text>
+        <Text style={[styles.fixedMenuText, {color: colors.text}]}>Home</Text>
       </TouchableOpacity>
 
       {/* Fixed Dashboard menu */}
       <TouchableOpacity
-        style={styles.fixedMenuRow}
+        style={[
+          styles.fixedMenuRow,
+          {
+            backgroundColor: colors.surfaceSecondary,
+            borderBottomColor: colors.border,
+          },
+        ]}
         activeOpacity={0.7}
         onPress={() => {
           navigation.closeDrawer();
@@ -330,13 +347,16 @@ if (loading) {
         <MaterialIcons
           name="dashboard"
           size={21}
-          color="#35DFA8"
+          color={colors.primary}
         />
-        <Text style={styles.fixedMenuText}>Dashboard</Text>
+        <Text style={[styles.fixedMenuText, {color: colors.text}]}>Dashboard</Text>
       </TouchableOpacity>
 
       {/* Separator */}
-      <View style={styles.menuSeparator} />
+      <View style={[
+          styles.menuSeparator,
+          {backgroundColor: colors.border},
+        ]} />
       {menuItems.map(item => (
         <TreeItem
           key={item.menuNumber}
@@ -352,7 +372,7 @@ if (loading) {
 const styles = StyleSheet.create({
   drawer: {
     flex: 1,
-    backgroundColor: '#354858',
+    // backgroundColor: '#354858',
   },
   scrollView: {
     flex: 1,
@@ -363,7 +383,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#354858',
+    // backgroundColor: '#354858',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -373,20 +393,20 @@ const styles = StyleSheet.create({
   alignItems: 'center',
   paddingHorizontal: 16,
   gap: 12,
-  backgroundColor: '#405466',
+  // backgroundColor: '#405466',
   borderBottomWidth: StyleSheet.hairlineWidth,
-  borderBottomColor: '#4B5E6D',
+  // borderBottomColor: '#4B5E6D',
 },
 
 fixedMenuText: {
-  color: '#F4F7F9',
+  // color: '#F4F7F9',
   fontSize: 14,
   fontWeight: '500',
 },
 
 menuSeparator: {
   height: 2,
-  backgroundColor: '#718392',
+  // backgroundColor: '#718392',
   marginVertical: 8,
   marginHorizontal: 12,
 },

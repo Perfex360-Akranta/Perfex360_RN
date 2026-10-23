@@ -15,6 +15,7 @@ import { get } from '../../services/axiosService';
 import { useGrid } from '../../context/GridProvider';
 import { GridFilterProps } from '../../types/GridFilters';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 
 interface FunctionalLocationValidate {
@@ -43,7 +44,7 @@ export default function GridFilters({
 }: GridFilterParms) {
 
 
-  
+const { colors } = useAppTheme();
 const { filter, setFilter } = useGrid(); 
 
 const [form, setForm] = useState<GridFilterProps>(filter);
@@ -277,7 +278,10 @@ const toDate = new Date(
       
 
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View style={[
+    styles.container,
+    { backgroundColor: colors.background },
+  ]}>
 
 
 <TouchableOpacity

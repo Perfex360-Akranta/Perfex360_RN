@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface MenuItem {
   menuNumber: string;
@@ -89,25 +90,36 @@ const TreeItem = ({
   level = 0,
   onPress,
 }: TreeItemProps) => {
+  const {colors} = useAppTheme();
+
   const caption = item.menuCaption || item.menuName || '';
   const hasChildren = item.parent === true;
   const expanded = item.expanded === true;
   const isRoot = level === 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {backgroundColor: colors.background}]}>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => onPress(item)}
         style={[
           styles.row,
-          { paddingLeft: 12 + level * 18 },
-          isRoot && styles.rootRow,
-          expanded && styles.activeRow,
+          {
+            paddingLeft: 12 + level * 18,
+            borderBottomColor: colors.border,
+            backgroundColor: expanded
+              ? colors.bands.overview
+              : isRoot
+                ? colors.surfaceSecondary
+                : colors.surface,
+          },
         ]}
       >
         {expanded && (
-          <View style={styles.activeIndicator} />
+          <View style={[
+              styles.activeIndicator,
+              {backgroundColor: colors.primary},
+            ]} />
         )}
 
         <View style={styles.iconBox}>
@@ -115,18 +127,29 @@ const TreeItem = ({
             <MaterialIcons
               name={getMenuIcon(caption) as any}
               size={18}
-              color={COLORS.text}
+              color={colors.primary}
             />
           ) : (
-            <View style={styles.treeDot} />
+            <View style={[
+                styles.treeDot,
+                {backgroundColor: colors.primary},
+              ]} />
           )}
         </View>
 
         <Text
           style={[
             styles.title,
-            !isRoot && styles.childTitle,
-            expanded && styles.expandedTitle,
+            {color: colors.text},
+            !isRoot && {
+              fontSize: 11,
+              color: colors.textSecondary,
+              fontWeight: '400',
+            },
+            expanded && {
+              color: colors.text,
+              fontWeight: '600',
+            },
           ]}
           numberOfLines={2}
         >
@@ -136,13 +159,13 @@ const TreeItem = ({
         {item.loading ? (
           <ActivityIndicator
             size="small"
-            color={COLORS.green}
+            color={colors.primary}
           />
         ) : hasChildren ? (
           <MaterialIcons
             name={expanded ? 'expand-more' : 'chevron-right'}
             size={22}
-            color={expanded ? COLORS.green : COLORS.muted}
+            color={expanded ? colors.primary : colors.textSecondary}
           />
         ) : null}
       </TouchableOpacity>
@@ -151,7 +174,10 @@ const TreeItem = ({
         item.children &&
         item.children.length > 0 && (
           <View style={styles.childrenContainer}>
-            <View style={styles.treeLine} />
+            <View style={[
+              styles.treeLine,
+              {backgroundColor: colors.border},
+            ]} />
 
             {item.children.map(child => (
               <TreeItem
