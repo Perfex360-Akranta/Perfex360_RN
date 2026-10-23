@@ -44,7 +44,7 @@ export type RootStackParamList = {
   AbnComp: undefined;
   AbnAllocation: undefined;
 
-  Suggestion: { editRecord?: any } | undefined;
+  Suggestion: { editRecord?: any, originalId?:string } | undefined;
   SuggestionModification: undefined;
   SuggestionView: undefined;
   SuggestionAcceptReject: undefined;
@@ -53,7 +53,7 @@ export type RootStackParamList = {
   //QrCodeScanner: { returnTo?: 'QrIds' } | undefined;
   //QrIds: { scannedId?: string } | undefined;
   WorkOrderCompletion: { workorderno?: string } | undefined;
-  EquipmentScanner: { returnTo?: 'WorkOrderList' | 'BreakdownEntry' } | undefined;
+  EquipmentScanner: { returnTo?: 'WorkOrderList' | 'BreakdownEntry' | 'Suggestion' } | undefined;
   BreakdownEntry: { equipmentNo?: string } | undefined;
   BreakdownAllocation: { equipmentNo?: string } | undefined;
   BreakdownCompletion: { equipmentNo?: string } | undefined;

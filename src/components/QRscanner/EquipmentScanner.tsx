@@ -181,6 +181,17 @@ export default function EquipmentScanner({ navigation, route }: any) {
         return;
       }
 
+      if (returnTo === 'Suggestion') {
+       
+        // navigation.navigate({
+        //   name: 'Suggestion',
+        //   params: { originalId: id },
+        //   merge: true,
+        // });
+        navigation.popTo('Suggestion', { originalId: id });
+        return;
+      }
+
       setRawValue(value);
       setScannedId(id);
     },

@@ -4,8 +4,10 @@ import React, {
   useId,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import {
+  Pressable,
   StyleSheet,
   TextInput,
   TextInputProps,
@@ -48,6 +50,10 @@ function splitStyles(style: any) {
 }
 
 const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
+
+  const [isFocused, setIsFocused] = useState(false);
+  const [showAssistActions, setShowAssistActions] = useState(false);
+  const [isPressingAssistAction, setIsPressingAssistAction] =useState(false);
   const { registerField, unregisterField } = useFieldAssist();
   const id = useId();
   const valueRef = useRef(props.value);
@@ -93,20 +99,47 @@ const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
       <TextInput
         {...props}
         ref={ref}
+         onFocus={event => {
+          setIsFocused(true);
+          setShowAssistActions(true);
+          props.onFocus?.(event);
+         }}
+         onBlur={event => {
+         requestAnimationFrame(() => {
+    if (!isPressingAssistAction) {
+      setIsFocused(false);
+      setShowAssistActions(false);
+    }
+  });
+          props.onBlur?.(event);
+         }}
         style={[
           inputStyle,
           styles.inputBase,
           isMultiline ? styles.multilinePadding : styles.singlelinePadding,
         ]}
       />
-      <View
-        style={[
-          styles.actionSlot,
-          isMultiline ? styles.actionSlotMultiline : styles.actionSlotSingle,
-        ]}>
-        <FieldAssistAction field={field} />
-      </View>
+      {showAssistActions && isFocused && (
+      <Pressable
+    style={styles.actionSlot}
+    onPressIn={() => setIsPressingAssistAction(true)}
+    onPressOut={() => {
+      // Allow the icon's onPress handler to execute first.
+      requestAnimationFrame(() => {
+        setIsPressingAssistAction(false);
+      });
+    }}
+  > 
+        <FieldAssistAction field={field}
+      visible={true}
+      onDismiss={() => {
+      setShowAssistActions(false);
+      setIsPressingAssistAction(false);
+    }} />
+       </Pressable>
+      )}
     </View>
+   
   );
 });
 
@@ -119,6 +152,7 @@ const styles = StyleSheet.create({
   },
   inputBase: {
     width: '100%',
+    backgroundColor:'#fff',
   },
   singlelinePadding: {
     paddingRight: 36,
@@ -126,11 +160,18 @@ const styles = StyleSheet.create({
   multilinePadding: {
     paddingRight: 36,
   },
+  // actionSlot: {
+  //   position: 'absolute',
+  //   right: 6,
+  //   zIndex: 10,
+  // },
   actionSlot: {
-    position: 'absolute',
-    right: 6,
-    zIndex: 10,
-  },
+  position: 'absolute',
+  right: 6,
+  top: -16,
+  zIndex: 20,
+  elevation: 10,
+},
   actionSlotSingle: {
     top: '50%',
     transform: [{ translateY: -13 }],

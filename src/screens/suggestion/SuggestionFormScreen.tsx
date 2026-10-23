@@ -19,6 +19,7 @@ import { get } from '../../services/axiosService';
 import { toApiDateString } from '../../utils/DateFormat';
 import { useVoiceGuide } from '../../context/VoiceGuideContext';
 import { VoiceGuidedField } from '../../components/assist/VoiceGuidedField';
+import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
 
 interface SuggestionForm {
   keyid: string;
@@ -67,6 +68,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   const { currentUser, currentRole } = useGrid();
   const editRecord = route?.params?.editRecord;
+  const originalId = route?.params?.originalId;
   const [isOthers, setIsOthers] = useState(false);
   const [isNonJhEsp, setIsNonJhEsp] = useState(false);
   const [isMailForApproval, setMailForApproval] = useState(true);
@@ -84,6 +86,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const suggestedByRef = useRef<any>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
 
+  const openScanner = () => {
+        navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
+    };
   const {
     startGuidance,
     stopGuidance,
@@ -479,6 +484,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   //   console.log('isJhSelected set to:', result.cellId ? true : false);
   // };
 
+
+  
   return (
     <ScrollView style={styles.container}>
 
@@ -495,7 +502,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         getValue={() => form.elementid}
         screenName="Suggestion Form"
       >
-        <FunctionalLocationView
+        {/* <FunctionalLocationView
           flid={form.flid}
           visible={true}
           validate={{
@@ -505,7 +512,14 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
             //updateField('flid', value);
             FunctionalLocation_SuccessCallback(value);
           }}
-        />
+        /> */}
+         <FunctionLocationScanner
+                originalid={originalId}
+                flid={form.flid}
+                onScanPress={openScanner}
+                title="JH"
+                onFunctionLoaded={FunctionalLocation_SuccessCallback}
+            />
       </VoiceGuidedField>
 
       <VoiceGuidedField

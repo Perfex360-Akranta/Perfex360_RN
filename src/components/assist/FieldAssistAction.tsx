@@ -11,12 +11,21 @@ import {
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { ActiveField, useFieldAssist } from '../../context/FieldAssistContext';
 
+// type Props = {
+//   field: ActiveField;
+//   style?: ViewStyle;
+// };
 type Props = {
   field: ActiveField;
   style?: ViewStyle;
+  visible?: boolean;
+  onDismiss?: () => void;
 };
 
-export default function FieldAssistAction({ field, style }: Props) {
+export default function FieldAssistAction({ field,
+  style,
+  visible,
+  onDismiss, }: Props) {
   const {
     activeField,
     listening,
@@ -34,6 +43,9 @@ export default function FieldAssistAction({ field, style }: Props) {
 
   const isCurrentField = activeField?.id === field.id;
   const isMenuOpen = openMenuFieldId === field.id;
+
+  const showActions = visible ?? isMenuOpen;
+
   const isListening = isCurrentField && listening;
   const isBusy = isCurrentField && busy !== null;
   const isSuccess = successFieldId === field.id;
@@ -65,18 +77,30 @@ export default function FieldAssistAction({ field, style }: Props) {
 
   // Spring animation for horizontal icon menu opening
   const menuAnim = useRef(new Animated.Value(0)).current;
+  // useEffect(() => {
+  //   if (isMenuOpen) {
+  //     Animated.spring(menuAnim, {
+  //       toValue: 1,
+  //       friction: 6,
+  //       tension: 90,
+  //       useNativeDriver: true,
+  //     }).start();
+  //   } else {
+  //     menuAnim.setValue(0);
+  //   }
+  // }, [isMenuOpen, menuAnim]);
   useEffect(() => {
-    if (isMenuOpen) {
-      Animated.spring(menuAnim, {
-        toValue: 1,
-        friction: 6,
-        tension: 90,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      menuAnim.setValue(0);
-    }
-  }, [isMenuOpen, menuAnim]);
+  if (showActions) {
+    Animated.spring(menuAnim, {
+      toValue: 1,
+      friction: 6,
+      tension: 90,
+      useNativeDriver: true,
+    }).start();
+  } else {
+    menuAnim.setValue(0);
+  }
+}, [showActions, menuAnim]);
 
   const handleToggleMenu = () => {
     if (isListening) {
@@ -100,7 +124,8 @@ export default function FieldAssistAction({ field, style }: Props) {
 
   return (
     <View style={[styles.container, style]}>
-      {isMenuOpen ? (
+      {/* {isMenuOpen ? ( */}
+      {showActions ? (
         <Animated.View
           style={[
             styles.horizontalBar,
@@ -149,7 +174,14 @@ export default function FieldAssistAction({ field, style }: Props) {
           {/* Close icon */}
           <TouchableOpacity
             style={[styles.actionIconBtn, styles.closeIconBtn]}
-            onPress={closeFieldMenu}
+            // onPress={closeFieldMenu}
+            onPress={() => {
+    if (onDismiss) {
+      onDismiss();
+    } else {
+      closeFieldMenu();
+    }
+  }}
             activeOpacity={0.65}
             accessibilityRole="button"
             accessibilityLabel="Close options">
