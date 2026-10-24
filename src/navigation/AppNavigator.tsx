@@ -62,6 +62,7 @@ export type RootStackParamList = {
   GeneralMaintenanceBooking: { equipmentNo?: string } | undefined;
   GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
   Cltischedule: undefined;
+  ActionPlanComp: undefined;
 
   WorkOrderList: undefined;
 
@@ -329,7 +330,11 @@ export default function AppNavigator() {
         options={{ title: 'CLTI Schedule' }}
       />
 
-
+      <Stack.Screen
+        name="ActionPlanComp"
+        component={ActionPlanCompletion}
+        options={{ title: 'Action Plan Completion' }}
+      />
 
     </Stack.Navigator>
 

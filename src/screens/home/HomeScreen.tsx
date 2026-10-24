@@ -159,6 +159,13 @@ const cards: CardItem[] = [
     colors: ['#1565C0', '#90CAF9'],
     screen: 'GeneralMaintenanceCompletion',
   },
+  {
+    title: 'ACTION PLAN COMPLETION',
+    subtitle: 'Complete action plans',
+    icon: 'check-circle',
+    colors: ['#8E44AD', '#D980FA'],
+    screen: 'ActionPlanComp',
+  },
 
   // {
   //   title: 'MULTIPLE',
