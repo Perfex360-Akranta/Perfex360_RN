@@ -65,9 +65,29 @@ const AppDropdown = forwardRef(({
     }
   };
 
+  // useImperativeHandle(ref, () => ({
+  //   reload: (requestParams?: any) => {
+  //     loadData(requestParams);
+  //   },
+  // }));
+  
+  //hari changes for open and close command
+    const dropdownRef = useRef<any>(null);
+
   useImperativeHandle(ref, () => ({
     reload: (requestParams?: any) => {
       loadData(requestParams);
+    },
+    // used by voice control
+       open: () => {
+      if (!disable) dropdownRef.current?.open?.();
+    },
+    close: () => dropdownRef.current?.close?.(),
+    getOptions: () => dataRef.current,
+    select: (val: string) => {
+      if (disable) return;
+      onChangeRef.current?.(val);
+      dropdownRef.current?.close?.();
     },
   }));
 
@@ -132,6 +152,7 @@ const AppDropdown = forwardRef(({
       <View style={styles.dropdownWrapper}>
 
         <Dropdown
+          ref={dropdownRef}
           maxHeight={400}
           style={[
             styles.dropdown,
