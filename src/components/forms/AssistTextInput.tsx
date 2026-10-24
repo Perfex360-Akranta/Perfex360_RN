@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { ActiveField, useFieldAssist } from '../../context/FieldAssistContext';
 import FieldAssistAction from '../assist/FieldAssistAction';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const LAYOUT_KEYS = [
   'margin',
@@ -50,6 +51,8 @@ function splitStyles(style: any) {
 }
 
 const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
+
+  const { colors } = useAppTheme();
 
   const [isFocused, setIsFocused] = useState(false);
   const [showAssistActions, setShowAssistActions] = useState(false);
@@ -116,6 +119,7 @@ const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
         style={[
           inputStyle,
           styles.inputBase,
+          {color:colors.text,borderColor:colors.border,backgroundColor:colors.surface},
           isMultiline ? styles.multilinePadding : styles.singlelinePadding,
         ]}
       />
@@ -152,7 +156,7 @@ const styles = StyleSheet.create({
   },
   inputBase: {
     width: '100%',
-    backgroundColor:'#fff',
+    // backgroundColor:'#fff',
   },
   singlelinePadding: {
     paddingRight: 36,

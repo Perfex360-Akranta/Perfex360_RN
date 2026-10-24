@@ -20,6 +20,7 @@ import { toApiDateString } from '../../utils/DateFormat';
 import { useVoiceGuide } from '../../context/VoiceGuideContext';
 import { VoiceGuidedField } from '../../components/assist/VoiceGuidedField';
 import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface SuggestionForm {
   keyid: string;
@@ -66,6 +67,7 @@ interface SuggestionForm {
 
 export default function SuggestionFormScreen({ navigation, route }: any) {
 
+  const { colors } = useAppTheme();
   const { currentUser, currentRole } = useGrid();
   const editRecord = route?.params?.editRecord;
   const originalId = route?.params?.originalId;
@@ -487,7 +489,10 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[
+    styles.container,
+    { backgroundColor: colors.background },
+  ]}>
 
       {/* <Text style={styles.heading}>
         Suggestion
@@ -598,7 +603,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       </View> */}
 
       <View style={{ marginTop: 5 }}>
-        <Text style={styles.label}>Benefit Area</Text>
+        <Text style={[styles.label,{color:colors.text}]}>Benefit Area</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
           {[
             { label: 'P', checked: isBenefitP },
@@ -614,12 +619,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
               style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View
                 style={[
-                  styles.customCheckbox,
+                  styles.customCheckbox,{backgroundColor:colors.background,borderColor:colors.border},
                   item.checked && styles.customCheckboxChecked,
                 ]}>
                 {item.checked && <Text style={styles.customCheckmark}>✓</Text>}
               </View>
-              <Text>{item.label}</Text>
+              <Text style={[{color:colors.text}]}>{item.label}</Text>
             </View>
           ))}
         </View>
@@ -666,8 +671,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
             <CheckBox
               value={isOthers}
               disabled={false}
+              tintColors={{
+    true: colors.primary,
+    false: colors.border,
+  }}
               onValueChange={handleOthersChange}
-            /><Text style={styles.label}>OTHERS</Text>
+            /><Text style={[styles.label,{color:colors.text}]}>OTHERS</Text>
             {/* <CheckBox
               value={isNonJhEsp}
               disabled={false}
@@ -726,8 +735,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
             <CheckBox
               value={isNonJhEsp}
               disabled={false}
+              tintColors={{
+                true: colors.primary,
+                false: colors.border,
+              }}
               onValueChange={handleNonJhEspChange}
-            /><Text style={styles.label}>Non JH Esp</Text>
+            /><Text  style={[styles.label,{color:colors.text}]}>Non JH Esp</Text>
           </View>
 
         </View>
@@ -743,7 +756,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         getValue={() => form.espsname}
         screenName="Suggestion Form"
       >
-        <Text>ESP Name's</Text>
+        <Text style={[styles.label,{color:colors.text}]}>ESP Name's</Text>
 
         <AssistTextInput
           multiline
@@ -760,8 +773,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         <CheckBox
           value={isMailForApproval}
           disabled={false}
+          tintColors={{
+                true: colors.primary,
+                false: colors.border,
+              }}
           onValueChange={setMailForApproval}
-        /><Text style={styles.label}>Mail For Approval</Text>
+        /><Text style={[styles.label,{color:colors.text}]}>Mail For Approval</Text>
       </View>
 
       <VoiceGuidedField

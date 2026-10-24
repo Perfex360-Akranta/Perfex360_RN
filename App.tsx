@@ -51,6 +51,7 @@ useEffect(() => {
 
   return (
     <SafeAreaProvider>
+      <ThemeProvider>
     <GridProvider>
     <FieldAssistProvider>
     <VoiceGuideProvider>
@@ -73,6 +74,7 @@ useEffect(() => {
     </VoiceGuideProvider>
     </FieldAssistProvider>
     </GridProvider>
+    </ThemeProvider>
     </SafeAreaProvider>
   );
 }

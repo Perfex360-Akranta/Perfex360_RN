@@ -19,6 +19,7 @@ import { saveToken } from '../../services/storage/tokenStorage';
 import ServerConfigModal from '../../components/model/ServerConfigModel';
 import { useGrid } from '../../context/GridProvider';
 import { useFieldAssist } from '../../context/FieldAssistContext';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState('');
@@ -134,16 +135,22 @@ useEffect(() => {
 
             <TextInput
               placeholder="Username"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
               value={username}
               onChangeText={setUsername}
-              style={styles.input}
+              style={[
+    styles.input,
+    {
+      color: colors.text,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },]}
               autoCapitalize="none"
             />
 
             <TextInput
               placeholder="Password"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSecondary}
               secureTextEntry
               value={password}
               onChangeText={setPassword}

@@ -21,6 +21,7 @@ import {getDropdownData} from '../../services/api/dropdownApi';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import {ActiveField, useFieldAssist} from '../../context/FieldAssistContext';
 import FieldAssistAction from '../assist/FieldAssistAction';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface DropdownItem {
   label: string;

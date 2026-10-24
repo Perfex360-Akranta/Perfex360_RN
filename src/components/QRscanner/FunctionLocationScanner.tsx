@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { getEquipmentDetailsByNo } from '../../services/api/WorkOrderApi';
 import { get } from '../../services/axiosService';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 export interface EquipmentHeaderProps {
     originalid?: string | null;
@@ -19,6 +20,9 @@ const FunctionLocationScanner: React.FC<EquipmentHeaderProps> = ({
     title = 'JH',
     onFunctionLoaded,
 }) => {
+
+    const { colors } = useAppTheme();
+
     const [fnlnName, setFnlnName] = useState<string | null>(null);
     const [fnlnId, setFnlnId] = useState<string | null>(null);
     const [showFlid, setShowFlid] = useState<boolean>(true);
@@ -68,16 +72,16 @@ const FunctionLocationScanner: React.FC<EquipmentHeaderProps> = ({
     }, [flid]);
 
     return (
-        <View style={styles.header}>
+        <View style={[styles.header,{borderColor:colors.border,backgroundColor:colors.surface}]}>
             <View style={styles.headerTextWrap}>
-                <Text style={styles.headerLabel}>{title}</Text>
-                <Text style={styles.headerValue} numberOfLines={1}>
+                <Text style={[styles.headerLabel,{color:colors.textSecondary}]}>{title}</Text>
+                <Text style={[styles.headerValue,{color:colors.text}]} numberOfLines={1}>
                     {fnlnId ?? 'No Function Location selected'}
                     {fnlnName ? ` - ${fnlnName}` : ''}
                 </Text>
             </View>
 
-            <TouchableOpacity style={styles.scanButton} onPress={onScanPress}>
+            <TouchableOpacity style={[styles.scanButton,{backgroundColor: colors.primary,shadowColor: colors.shadow,}]} onPress={onScanPress}>
                 <MaterialIcons name="qr-code-scanner" size={22} color="#FFFFFF" />
             </TouchableOpacity>
         </View>
