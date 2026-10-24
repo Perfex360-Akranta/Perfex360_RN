@@ -32,6 +32,7 @@ import BreakdownCompletion from '../screens/Breakdown/BreakdownCompletion';
 import GeneralMaintenanceBooking from '../screens/GeneralMaintenance/generalmaintenancebooking';
 import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalmaintenancecompletion';
 import CltiSchedule from '../screens/CLTI/cltiSchedule';
+import ActionPlanCompletion from '../screens/ActionPlan/ActionPlanCompletion';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -59,6 +60,7 @@ export type RootStackParamList = {
   GeneralMaintenanceBooking: { equipmentNo?: string } | undefined;
   GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
   Cltischedule: undefined;
+  ActionPlanComp: undefined;
 
   WorkOrderList: undefined;
 
@@ -314,7 +316,11 @@ export default function AppNavigator() {
         options={{ title: 'CLTI Schedule' }}
       />
 
-
+      <Stack.Screen
+        name="ActionPlanComp"
+        component={ActionPlanCompletion}
+        options={{ title: 'Action Plan Completion' }}
+      />
 
     </Stack.Navigator>
 

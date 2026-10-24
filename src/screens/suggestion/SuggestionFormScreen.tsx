@@ -17,6 +17,8 @@ import { saveSuggestion, getSuggestionById } from '../../services/api/kaizenSugg
 import { useGrid } from '../../context/GridProvider';
 import { get } from '../../services/axiosService';
 import { toApiDateString } from '../../utils/DateFormat';
+import SuggestionImageUpload, { PickedImage } from '../../components/forms/SuggestionImageUpload';
+import { uploadSuggestionImage } from '../../services/api/suggestionImageApi';
 
 interface SuggestionForm {
   keyid: string;
@@ -81,6 +83,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const [selectedCellId, setSelectedCellId] = useState('');
   const suggestedByRef = useRef<any>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
+  const [suggestionImage, setSuggestionImage] = useState<PickedImage | null>(null);
 
 
 
@@ -233,6 +236,31 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       setSaving(true);
       const responseData = await saveSuggestion(payload);
       console.log('responseData:', responseData);
+
+      
+      // Upload the selected image (if any) against the saved suggestion
+      if (suggestionImage && responseData?.keyid) {
+        try {
+          const employeeId = currentUser.employeeId;
+
+          if (!employeeId) {
+            throw new Error('Employee ID is missing.');
+          }
+
+          await uploadSuggestionImage(
+            responseData.keyid,
+            suggestionImage,
+            employeeId
+          );
+        } catch (imageError) {
+          console.log('image upload error:', imageError);
+          Alert.alert(
+            'Image Upload Failed',
+            'The suggestion was saved, but the image could not be uploaded.'
+          );
+        }
+      }
+
       Alert.alert('Success', successMessage);
 
       if (editRecord) {
@@ -244,7 +272,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       console.log('save error:', error);
       Alert.alert(
         'Save Failed',
-        error?.response?.data?.message || error?.message || 'Something went wrong'
+        error?.response?.data?.message ||
+          error?.message ||
+          'Something went wrong'
       );
     } finally {
       setSaving(false);
@@ -379,6 +409,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     setDateResetKey(prev => prev + 1);
     setIsJhSelected(false);
     setSelectedCellId('');
+    setSuggestionImage(null);
   };
 
   useEffect(() => {
@@ -656,6 +687,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         /><Text style={styles.label}>Mail For Approval</Text>
       </View>
 
+      <SuggestionImageUpload value={suggestionImage} onChange={setSuggestionImage} />
+
       <View style={styles.buttonWrapper}>
         <TouchableOpacity
           style={[styles.button, styles.buttonTop]}
@@ -686,7 +719,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     </ScrollView>
   );
 }
-
+saveSuggestion
 const styles = StyleSheet.create({
   container: {
     flex: 1,
