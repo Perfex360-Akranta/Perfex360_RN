@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator
 } from 'react-native';
 import DatePicker from '../../components/forms/DatePicker';
 import AppDropdown from '../../components/forms/AppDropdown';
@@ -19,13 +18,20 @@ import { get } from '../../services/axiosService';
 import { toApiDateString } from '../../utils/DateFormat';
 import { useVoiceGuide } from '../../context/VoiceGuideContext';
 import { VoiceGuidedField } from '../../components/assist/VoiceGuidedField';
+import { speak } from '../../services/assist/voiceGuide';
+import {
+  useVoiceControl,
+  useRegisterVoiceControl,
+  useRegisterVoiceAction,
+} from '../../context/VoiceControlContext';
+import VoiceControlButton from '../../components/assist/VoiceControlButton';
+// NOTE: spelling must match the real file name (the provider imports 'Voicecommands')
+import { parseSpokenDate } from '../../services/assist/Voicecommands';
 import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
-import { useAppTheme } from '../../theme/ThemeContext';
 import SuggestionImageUpload, { PickedImage } from '../../components/forms/SuggestionImageUpload';
-import { uploadSuggestionImage } from '../../services/api/suggestionImageApi';
-
 import { fromByteArray } from 'base64-js';
-import { getSuggestionImage } from '../../services/api/suggestionImageApi';
+import { getSuggestionImage, uploadSuggestionImage } from '../../services/api/suggestionImageApi';
+import { useAppTheme } from '../../theme/ThemeContext';
 
 interface SuggestionForm {
   keyid: string;
@@ -75,7 +81,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const { colors } = useAppTheme();
   const { currentUser, currentRole } = useGrid();
   const editRecord = route?.params?.editRecord;
-  const originalId = route?.params?.originalId;
+   const originalId = route?.params?.originalId;
   const [isOthers, setIsOthers] = useState(false);
   const [isNonJhEsp, setIsNonJhEsp] = useState(false);
   const [isMailForApproval, setMailForApproval] = useState(true);
@@ -91,28 +97,27 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const [isJhSelected, setIsJhSelected] = useState(false);
   const [selectedCellId, setSelectedCellId] = useState('');
   const suggestedByRef = useRef<any>(null);
+  const functionalLocationRef = useRef<any>(null);
+  const themeCategoryRef = useRef<any>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
-  const [suggestionImage, setSuggestionImage] = useState<PickedImage | null>(null);
 
-  const [existingImageUri, setExistingImageUri] = useState<string | null>(null);
-  const openScanner = () => {
+   const [suggestionImage, setSuggestionImage] = useState<PickedImage | null>(null);
+   const [existingImageUri, setExistingImageUri] = useState<string | null>(null);
+
+   const openScanner = () => {
         navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
     };
-  const {
-    startGuidance,
-    stopGuidance,
-    announceSuccess,
-    announceFailure,
-    isActive,
-  } = useVoiceGuide();
+  const { announceFailure } = useVoiceGuide();
 
+  // Voice control is switched on as soon as the screen opens (runs once)
+  const { startListening, stopListening } = useVoiceControl();
   useEffect(() => {
-    startGuidance('Suggestion Form');
-
+    startListening();
     return () => {
-      stopGuidance();
+      stopListening(true);
     };
-  }, [startGuidance, stopGuidance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [form, setForm] = useState<SuggestionForm>({
     keyid: '',
@@ -161,7 +166,6 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     setIsOthers(newValue);
     console.log('Others value:', newValue);
 
-
     updateField('suggestedby', '');
 
     setTimeout(() => {
@@ -175,11 +179,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const handleNonJhEspChange = (newValue: any) => {
     setIsNonJhEsp(newValue);
     console.log('Non JH Esp value:', newValue);
-
   };
 
   const [saving, setSaving] = useState(false);
-
 
   const onSavePress = (confirmMessage: string, successMessage: string, approvalFlag: 'Y' | 'N') => {
     if (!validateForm()) {
@@ -197,26 +199,24 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   };
 
   const validateForm = (): boolean => {
-    if (!form.elementid) {
-      Alert.alert('Validation', 'JH is required');
+    const fail = (msg: string) => {
+      speak(msg);
+      Alert.alert('Validation', msg);
       return false;
-    }
+    };
 
-    if (!form.kaizen.trim()) {
-      Alert.alert('Validation', 'Suggestion is required');
-      return false;
-    }
-
-    if (!form.suggestedby) {
-      Alert.alert('Validation', 'Suggested By is required');
-      return false;
-    }
+    if (!form.elementid) return fail('JH is required');
+    if (!form.kaizen.trim()) return fail('Suggestion is required');
+    if (!form.suggestedby) return fail('Suggested By is required');
 
     return true;
   };
 
-
-  const performSave = async (successMessage: string, approvalFlag: 'Y' | 'N') => {
+  const performSave = async (
+    successMessage: string,
+    approvalFlag: 'Y' | 'N',
+    spokenSuccess?: string,
+  ) => {
     console.log('SUBMIT PRESSED');
 
     const pqcdsme =
@@ -228,18 +228,6 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       (isBenefitM ? 'M' : '') +
       (isBenefitE ? 'E' : '');
 
-
-
-    // const payload = {
-    //   ...form,
-    //   benefit: themeCategoryId,
-    //   pqcdsme,
-    //   others: isOthers ? 'Y' : 'N',
-    //   nonjhesp: isNonJhEsp ? 'Y' : 'N',
-    //   mailForApproval: isMailForApproval ? 'Y' : 'N',
-    //   responsibility: form.suggestedby,
-    //   modifiedon: new Date(),
-    // };
     const payload = {
       ...form,
       pqcdsme,
@@ -259,50 +247,34 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
     console.log('save Started:', payload);
 
-    // try {
-    //   setSaving(true);
-    //   const responseData = await saveSuggestion(payload);
-    //   console.log('responseData:', responseData);
-    //   await announceSuccess('Suggestion');
-    //   Alert.alert('Success', successMessage);
-
-    //   if (editRecord) {
-    //     navigation.goBack();
-    //   } else {
-    //     resetForm();
-    //   }
-    // } 
     try {
       setSaving(true);
       const responseData = await saveSuggestion(payload);
       console.log('responseData:', responseData);
-
-            // Upload the selected image (if any) against the saved suggestion
-      if (suggestionImage && responseData?.keyid) {
-        try {
-          const employeeId = currentUser.employeeId;
-
-          if (!employeeId) {
-            throw new Error('Employee ID is missing.');
-          }
-
-          await uploadSuggestionImage(
-            responseData.keyid,
-            suggestionImage,
-            'KSB',
-            suggestionImage.type
-          );
-        } catch (imageError) {
-          console.log('image upload error:', imageError);
-          Alert.alert(
-            'Image Upload Failed',
-            'The suggestion was saved, but the image could not be uploaded.'
-          );
-        }
-      }
-
-      stopGuidance(); // no more field prompts after a successful save
-      const spoken = announceSuccess('Suggestion');
+       // Upload the selected image (if any) against the saved suggestion
+            if (suggestionImage && responseData?.keyid) {
+              try {
+                const employeeId = currentUser.employeeId;
+      
+                if (!employeeId) {
+                  throw new Error('Employee ID is missing.');
+                }
+      
+                await uploadSuggestionImage(
+                  responseData.keyid,
+                  suggestionImage,
+                  'KSB',
+                  suggestionImage.type
+                );
+              } catch (imageError) {
+                console.log('image upload error:', imageError);
+                Alert.alert(
+                  'Image Upload Failed',
+                  'The suggestion was saved, but the image could not be uploaded.'
+                );
+              }
+            }
+      const spoken = speak(spokenSuccess ?? 'Suggestion completed successfully');
       Alert.alert('Success', successMessage);
 
       if (editRecord) {
@@ -311,8 +283,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       } else {
         resetForm();
       }
-    }
-    catch (error: any) {
+    } catch (error: any) {
       console.log('save error:', error);
       await announceFailure(error?.response?.data?.message || error?.message || 'Something went wrong');
       Alert.alert(
@@ -363,7 +334,6 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     }
   };
 
-  //change
   const recallCategory = async (keyid: string) => {
     try {
       const result = await get(`kznbnk/categoryRecall/${keyid}`);
@@ -373,8 +343,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       console.log('Category recall error:', error);
       return null;
     }
-  }
-
+  };
 
   const FunctionalLocation_SuccessCallback = (
     result: any
@@ -493,21 +462,20 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       setIsOthers(existing.others === 'Y');
       setIsNonJhEsp(existing.nonjhesp === 'Y');
       setMailForApproval(existing.mailForApproval === 'Y');
-
       try {
-  const imageBytes = await getSuggestionImage(
-    keyid,
-    'KSB',
-    'KSB', // Must match the imageType stored during upload
-  );
-
-  const base64 = fromByteArray(new Uint8Array(imageBytes));
-  setExistingImageUri(`data:image/jpeg;base64,${base64}`);
-} catch (error: any) {
-  // A suggestion may not have an image yet.
-  setExistingImageUri(null);
-  console.log('No existing suggestion image:', error?.message);
-}
+        const imageBytes = await getSuggestionImage(
+          keyid,
+          'KSB',
+          'KSB', // Must match the imageType stored during upload
+        );
+      
+        const base64 = fromByteArray(new Uint8Array(imageBytes));
+        setExistingImageUri(`data:image/jpeg;base64,${base64}`);
+      } catch (error: any) {
+        // A suggestion may not have an image yet.
+        setExistingImageUri(null);
+        console.log('No existing suggestion image:', error?.message);
+      }
     } catch (error) {
       console.log('load full suggestion error:', error);
       Alert.alert('Error', 'Could not load the suggestion for editing.');
@@ -516,358 +484,420 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     }
   };
 
-  // const FunctionalLocation_SuccessCallback = (
-  //   result: any
-  // ) => {
-  //   console.log('FL result:', result);
-  //   setForm(prev => ({
-  //     ...prev,
-  //     sectionid: result.sectionId ?? '',
-  //     cellid: result.cellId ?? '',
-  //     equipmentid: result.machineId ?? '',
-  //     flid: result.flid ?? '',
-  //     elementid: result.elementId ?? '',
-  //   }));
-  //   setSelectedCellId(result.cellId ?? '');
-  //   setIsJhSelected(result.cellId ? true : false);
-  //   console.log('isJhSelected set to:', result.cellId ? true : false);
-  // };
 
+  // ---------------- Voice control registration ----------------
+  const dropdownDef = (
+    id: string,
+    label: string,
+    aliases: string[],
+    ref: React.MutableRefObject<any>,
+    keywords: string[] = [],
+  ) => ({
+    id, label, aliases, keywords,
+    kind: 'dropdown' as const,
+    open: () => ref.current?.open?.(),
+    close: () => ref.current?.close?.(),
+    getOptions: () => ref.current?.getOptions?.() ?? [],
+    select: (v: string) => ref.current?.select?.(v),
+  });
 
-  
+  useRegisterVoiceControl({
+    id: 'functionalLocation',
+    label: 'functional location',
+    aliases: ['functional location', 'function location', 'functional', 'f l'],
+    keywords: ['function', 'funtion', 'functions', 'location', 'locations', 'loca', 'fl'],
+    kind: 'panel',
+    open: () => functionalLocationRef.current?.open?.(),
+    close: () => {
+      functionalLocationRef.current?.close?.();
+      return 'Functional location closed';
+    },
+    confirm: () => functionalLocationRef.current?.submit?.(),
+    cancel: () => functionalLocationRef.current?.close?.(),
+  });
+
+  useRegisterVoiceControl(
+    dropdownDef(
+      'themeCategory',
+      'theme category',
+      ['theme category', 'theme', 'category'],
+      themeCategoryRef,
+      [
+        'team', 'deme', 'eme', 'me', 'teme', 'them', 'thee', 'seem', 'dream',
+        'catogory', 'categori', 'categories', 'cat', 'gory', 'ory', 'catee', 'categoty',
+        'team category', 'deme category', 'me category', 'theme categories',
+      ],
+    ),
+  );
+
+  useRegisterVoiceControl(
+    dropdownDef(
+      'suggestedBy',
+      'suggested by',
+      ['suggested by', 'suggested', 'employee'],
+      suggestedByRef,
+      ['suggester', 'suggestor', 'by', 'employees', 'name'],
+    ),
+  );
+
+  useRegisterVoiceControl({
+    id: 'suggestion',
+    label: 'suggestion',
+    aliases: ['suggestion', 'kaizen'],
+    keywords: ['suggestions', 'idea', 'ideas', 'kaizen suggestion'],
+    kind: 'text',
+    getText: () => form.kaizen,
+    setText: v => updateField('kaizen', v),
+  });
+
+  useRegisterVoiceControl({
+    id: 'espNames',
+    label: 'ESP names',
+    aliases: ['esp names', 'esp name', 'esp'],
+    keywords: ['espn', 'esb', 'e s p', 'sp', 'names', 'name'],
+    kind: 'text',
+    getText: () => form.espsname,
+    setText: v => updateField('espsname', v),
+  });
+
+  useRegisterVoiceControl({
+    id: 'date',
+    label: 'date',
+    aliases: ['date'],
+    keywords: ['data', 'dated', 'day'],
+    kind: 'custom',
+    prompt: 'Say today, yesterday, or a number of days ago',
+    handleValue: spoken => {
+      const d = parseSpokenDate(spoken);
+      if (!d) return null;
+      updateField('date', d);
+      return `Date set to ${d.toDateString()}`;
+    },
+  });
+
+  useRegisterVoiceControl({
+    id: 'others',
+    label: 'others',
+    aliases: ['others', 'other'],
+    keywords: ['otherwise'],
+    kind: 'checkbox',
+    setChecked: c => handleOthersChange(c),
+  });
+
+  useRegisterVoiceControl({
+    id: 'nonJhEsp',
+    label: 'non JH ESP',
+    aliases: ['non jh esp', 'non jh', 'non esp'],
+    keywords: ['non', 'none', 'nonjh'],
+    kind: 'checkbox',
+    setChecked: c => handleNonJhEspChange(c),
+  });
+
+  useRegisterVoiceControl({
+    id: 'mailForApproval',
+    label: 'mail for approval',
+    aliases: ['mail for approval', 'mail', 'approval mail'],
+    keywords: ['email', 'e mail', 'male', 'approval', 'approve'],
+    kind: 'checkbox',
+    setChecked: c => setMailForApproval(c),
+  });
+
+  const voiceSave = async (approvalFlag: 'Y' | 'N') => {
+    if (!validateForm()) {
+      return;
+    }
+    await performSave(
+      approvalFlag === 'Y' ? 'Suggestion saved and sent to leader' : 'Data saved successfully',
+      approvalFlag,
+      approvalFlag === 'Y'
+        ? 'Suggestion sent to leader successfully'
+        : 'Suggestion saved successfully',
+    );
+  };
+  useRegisterVoiceAction('save', () => voiceSave('N'));
+  useRegisterVoiceAction('saveAndSend', () => voiceSave('Y'));
+
   return (
-    <ScrollView style={[
+    <View style={{ flex: 1 }}>
+      <ScrollView style={[
     styles.container,
     { backgroundColor: colors.background },
   ]}>
 
-      {/* <Text style={styles.heading}>
-        Suggestion
-      </Text> */}
-
-      <VoiceGuidedField
-        id="functionalLocation"
-        label="select functional location"
-        type="dropdown"
-        isMandatory={true}
-        order={1}
-        getValue={() => form.elementid}
-        screenName="Suggestion Form"
-      >
-        {/* <FunctionalLocationView
-          flid={form.flid}
-          visible={true}
-          validate={{
-            isCell: true
-          }}
-          onSelect={(value: any) => {
-            //updateField('flid', value);
-            FunctionalLocation_SuccessCallback(value);
-          }}
-        /> */}
-         <FunctionLocationScanner
+        <VoiceGuidedField
+          id="functionalLocation"
+          label="select functional location"
+          type="dropdown"
+          isMandatory={true}
+          order={1}
+          getValue={() => form.elementid}
+          screenName="Suggestion Form"
+        >
+          {/* <FunctionalLocationView
+            ref={functionalLocationRef}
+            flid={form.flid}
+            visible={true}
+            validate={{
+              isCell: true
+            }}
+            onSelect={(value: any) => {
+              FunctionalLocation_SuccessCallback(value);
+            }}
+          /> */}
+          <FunctionLocationScanner
                 originalid={originalId}
                 flid={form.flid}
                 onScanPress={openScanner}
                 title="JH"
                 onFunctionLoaded={FunctionalLocation_SuccessCallback}
             />
-      </VoiceGuidedField>
+        </VoiceGuidedField>
 
-      <VoiceGuidedField
-        id="suggestion"
-        label="enter suggestion"
-        type="text"
-        isMandatory={true}
-        order={2}
-        getValue={() => form.kaizen}
-        screenName="Suggestion Form"
-      >
-        <Text style={styles.mandatoryLabel}>*Suggestion</Text>
+        <VoiceGuidedField
+          id="suggestion"
+          label="enter suggestion"
+          type="text"
+          isMandatory={true}
+          order={2}
+          getValue={() => form.kaizen}
+          screenName="Suggestion Form"
+        >
+          <Text style={styles.mandatoryLabel}>*Suggestion</Text>
 
-        <AssistTextInput
-          multiline
-          numberOfLines={5}
-          style={styles.textArea}
-          value={form.kaizen}
-          onChangeText={v =>
-            updateField('kaizen', v)
-          }
-        />
-      </VoiceGuidedField>
-      {/* change */}
-      <VoiceGuidedField
-        id="themeCategory"
-        label="select theme category"
-        type="dropdown"
-        isMandatory={false}
-        order={3}
-        getValue={() => form.benefit}
-        screenName="Suggestion Form"
-      >
-        <View>
-          <AppDropdown
-            label="Theme Category"
-            value={form.benefit}
-            endpoint="commonFilter/kaizen/kaizenactegoryfillcombo"
-            onChange={(value: any) => {
-              const applyRecall = async () => {
-                const recall = await recallCategory(value);
-                updateField('benefit', value);
-                if (recall?.code) {
-                  applyBenefitAreaFromCode(recall.code);
-                }
-              };
-
-              if (form.keyid) {
-                Alert.alert(
-                  'Confirm',
-                  'Do you want to change the Benefit Area and Theme Category?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'OK', onPress: applyRecall },
-                  ]
-                );
-              } else {
-                applyRecall();
-              }
-            }}
+          <AssistTextInput
+            multiline
+            numberOfLines={5}
+            style={styles.textArea}
+            value={form.kaizen}
+            onChangeText={v =>
+              updateField('kaizen', v)
+            }
           />
-        </View>
-      </VoiceGuidedField>
+        </VoiceGuidedField>
 
-      {/* <View>
-        <AppDropdown
-          label="Theme Category"
-          value={form.benefit}
-          endpoint="commonFilter/kaizen/kaizenactegoryfillcombo"
-          onChange={(value: any) => {
-            updateField('benefit', value);
-            const { code } = parseThemeCategoryValue(value);
-            applyBenefitAreaFromCode(code);
-          }}
-        />
-      </View> */}
+        <VoiceGuidedField
+          id="themeCategory"
+          label="select theme category"
+          type="dropdown"
+          isMandatory={false}
+          order={3}
+          getValue={() => form.benefit}
+          screenName="Suggestion Form"
+        >
+          <View>
+            <AppDropdown
+              ref={themeCategoryRef}
+              label="Theme Category"
+              value={form.benefit}
+              endpoint="commonFilter/kaizen/kaizenactegoryfillcombo"
+              onChange={(value: any) => {
+                const applyRecall = async () => {
+                  const recall = await recallCategory(value);
+                  updateField('benefit', value);
+                  if (recall?.code) {
+                    applyBenefitAreaFromCode(recall.code);
+                  }
+                };
 
-      <View style={{ marginTop: 5 }}>
-        <Text style={[styles.label,{color:colors.text}]}>Benefit Area</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-          {[
-            { label: 'P', checked: isBenefitP },
-            { label: 'Q', checked: isBenefitQ },
-            { label: 'C', checked: isBenefitC },
-            { label: 'D', checked: isBenefitD },
-            { label: 'S', checked: isBenefitS },
-            { label: 'M', checked: isBenefitM },
-            { label: 'E', checked: isBenefitE },
-          ].map(item => (
-            <View
-              key={item.label}
-              style={{ flexDirection: 'row', alignItems: 'center' }}>
+                if (form.keyid) {
+                  Alert.alert(
+                    'Confirm',
+                    'Do you want to change the Benefit Area and Theme Category?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'OK', onPress: applyRecall },
+                    ]
+                  );
+                } else {
+                  applyRecall();
+                }
+              }}
+            />
+          </View>
+        </VoiceGuidedField>
+
+        <View style={{ marginTop: 5 }}>
+          <Text style={[styles.label,{color:colors.text}]}>Benefit Area</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+            {[
+              { label: 'P', checked: isBenefitP },
+              { label: 'Q', checked: isBenefitQ },
+              { label: 'C', checked: isBenefitC },
+              { label: 'D', checked: isBenefitD },
+              { label: 'S', checked: isBenefitS },
+              { label: 'M', checked: isBenefitM },
+              { label: 'E', checked: isBenefitE },
+            ].map(item => (
               <View
-                style={[
+                key={item.label}
+                style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={[
                   styles.customCheckbox,{backgroundColor:colors.background,borderColor:colors.border},
                   item.checked && styles.customCheckboxChecked,
                 ]}>
-                {item.checked && <Text style={styles.customCheckmark}>✓</Text>}
+                  {item.checked && <Text style={styles.customCheckmark}>✓</Text>}
+                </View>
+                <Text style={[{color:colors.text}]}>{item.label}</Text>
               </View>
-              <Text style={[{color:colors.text}]}>{item.label}</Text>
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
-      </View>
 
-      {/* <View>
-        <AppDropdown
-          label="Suggested By"
-          manditory={!isOthers}
-          value={form.suggestedby}
-          endpoint="dropdown/abnormality-employees"
-          disable={isOthers}
-          onChange={(value: any) =>
-            updateField('suggestedby', value)
-          }
+        <VoiceGuidedField
+          id="suggestedBy"
+          label="select suggested by"
+          type="dropdown"
+          isMandatory={true}
+          order={4}
+          getValue={() => form.suggestedby}
+          screenName="Suggestion Form"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
+            <Text style={styles.mandatoryLabel}>Suggested By *</Text>
 
-        />
-
-        <CheckBox
-          value={isOthers}
-          disabled={false}
-          onValueChange={handleOthersChange}
-        /><Text style={styles.label}>OTHERS</Text>
-        <CheckBox
-          value={isNonJhEsp}
-          disabled={false}
-          onValueChange={handleNonJhEspChange}
-        /><Text style={styles.label}>Non JH Esp</Text>
-      </View> */}
-
-      <VoiceGuidedField
-        id="suggestedBy"
-        label="select suggested by"
-        type="dropdown"
-        isMandatory={true}
-        order={4}
-        getValue={() => form.suggestedby}
-        screenName="Suggestion Form"
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 }}>
-          <Text style={styles.mandatoryLabel}>Suggested By *</Text>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <CheckBox
-              value={isOthers}
-              disabled={false}
-              tintColors={{
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <CheckBox
+                value={isOthers}
+                disabled={false}
+                tintColors={{
     true: colors.primary,
     false: colors.border,
   }}
-              onValueChange={handleOthersChange}
-            /><Text style={[styles.label,{color:colors.text}]}>OTHERS</Text>
-            {/* <CheckBox
-              value={isNonJhEsp}
-              disabled={false}
-              onValueChange={handleNonJhEspChange}
-            /><Text style={styles.label}>Non JH Esp</Text> */}
+                onValueChange={handleOthersChange}
+              /><Text style={[styles.label,{color:colors.text}]}>OTHERS</Text>
+            </View>
           </View>
-        </View>
 
-        <AppDropdown
-          ref={suggestedByRef}
-          manditory={true}
-          value={form.suggestedby}
-          endpoint="commonFilter/employee"
-          params={{
-            cellId: selectedCellId,
-            others: isOthers ? 'Y' : undefined,
-          }}
-          onChange={(value: any) =>
-            updateField('suggestedby', value)
-          }
-        />
-      </VoiceGuidedField>
-
-
-      <VoiceGuidedField
-        id="date"
-        label="select date"
-        type="dropdown"
-        isMandatory={false}
-        order={5}
-        getValue={() => form.date.toISOString()}
-        screenName="Suggestion Form"
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-          <DatePicker
-            key={dateResetKey}
-            label="Date"
-            value={form.date}
-            onChange={v => {
-              const selected = new Date(v);
-              const today = new Date();
-              today.setHours(23, 59, 59, 999);
-
-              if (selected > today) {
-                Alert.alert('Invalid Date', 'Future date not accepted');
-                updateField('date', new Date());
-                setDateResetKey(prev => prev + 1);
-                return;
-              }
-
-              updateField('date', v);
+          <AppDropdown
+            ref={suggestedByRef}
+            manditory={true}
+            value={form.suggestedby}
+            endpoint="commonFilter/employee"
+            params={{
+              cellId: selectedCellId,
+              others: isOthers ? 'Y' : undefined,
             }}
+            onChange={(value: any) =>
+              updateField('suggestedby', value)
+            }
           />
+        </VoiceGuidedField>
 
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginLeft: 20, marginBottom: 12 }}>
-            <CheckBox
-              value={isNonJhEsp}
-              disabled={false}
-              tintColors={{
+        <VoiceGuidedField
+          id="date"
+          label="select date"
+          type="dropdown"
+          isMandatory={false}
+          order={5}
+          getValue={() => form.date.toISOString()}
+          screenName="Suggestion Form"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+            <DatePicker
+              key={dateResetKey}
+              label="Date"
+              value={form.date}
+              onChange={v => {
+                const selected = new Date(v);
+                const today = new Date();
+                today.setHours(23, 59, 59, 999);
+
+                if (selected > today) {
+                  Alert.alert('Invalid Date', 'Future date not accepted');
+                  updateField('date', new Date());
+                  setDateResetKey(prev => prev + 1);
+                  return;
+                }
+
+                updateField('date', v);
+              }}
+            />
+
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginLeft: 20, marginBottom: 12 }}>
+              <CheckBox
+                value={isNonJhEsp}
+                disabled={false}
+                 tintColors={{
                 true: colors.primary,
                 false: colors.border,
               }}
-              onValueChange={handleNonJhEspChange}
-            /><Text  style={[styles.label,{color:colors.text}]}>Non JH Esp</Text>
+                onValueChange={handleNonJhEspChange}
+              /><Text style={[styles.label,{color:colors.text}]}>Non JH Esp</Text>
+            </View>
+
           </View>
+        </VoiceGuidedField>
 
+        <VoiceGuidedField
+          id="espNames"
+          label="enter ESP names"
+          type="text"
+          isMandatory={false}
+          order={6}
+          getValue={() => form.espsname}
+          screenName="Suggestion Form"
+        >
+          <Text style={[styles.label,{color:colors.text}]}>ESP Name's</Text>
+
+          <AssistTextInput
+            multiline
+            numberOfLines={3}
+            style={styles.textArea}
+            value={form.espsname}
+            onChangeText={v =>
+              updateField('espsname', v)
+            }
+          />
+        </VoiceGuidedField>
+
+        <SuggestionImageUpload value={suggestionImage}  existingImageUrl={existingImageUri} onChange={setSuggestionImage} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, marginBottom: 12 }}>
+          <CheckBox
+            value={isMailForApproval}
+            disabled={false}
+            onValueChange={setMailForApproval}
+          /><Text style={styles.label}>Mail For Approval</Text>
         </View>
-      </VoiceGuidedField>
 
+        <VoiceGuidedField
+          id="saveButton"
+          label="Tap the save button to save your records"
+          type="button"
+          isMandatory={false}
+          order={7}
+          getValue={() => ''}
+          screenName="Suggestion Form"
+        >
+          <View style={styles.buttonWrapper}>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonTop]}
+              onPress={() =>
+                onSavePress('Do you want to save the suggestion?', 'Data saved successfully', 'N')
+              }>
+              <Text style={styles.buttonText}>
+                Save
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonBottom]}
+              onPress={() =>
+                onSavePress(
+                  'Submitting will send the suggestion to leader',
+                  'Suggestion saved and sent to leader',
+                  'Y'
+                )
+              }>
+              <Text style={styles.buttonText}>
+                Save and Send to Leader
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </VoiceGuidedField>
 
-      <VoiceGuidedField
-        id="espNames"
-        label="enter ESP names"
-        type="text"
-        isMandatory={false}
-        order={6}
-        getValue={() => form.espsname}
-        screenName="Suggestion Form"
-      >
-        <Text style={[styles.label,{color:colors.text}]}>ESP Name's</Text>
-
-        <AssistTextInput
-          multiline
-          numberOfLines={3}
-          style={styles.textArea}
-          value={form.espsname}
-          onChangeText={v =>
-            updateField('espsname', v)
-          }
-        />
-      </VoiceGuidedField>
-
-      <SuggestionImageUpload value={suggestionImage}  existingImageUrl={existingImageUri} onChange={setSuggestionImage} />
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, marginBottom: 12 }}>
-        <CheckBox
-          value={isMailForApproval}
-          disabled={false}
-          tintColors={{
-                true: colors.primary,
-                false: colors.border,
-              }}
-          onValueChange={setMailForApproval}
-        /><Text style={[styles.label,{color:colors.text}]}>Mail For Approval</Text>
-      </View>
-
-      <VoiceGuidedField
-        id="saveButton"
-        label="Tap the save button to save your records"
-        type="button"
-        isMandatory={false}
-        order={7}
-        getValue={() => ''}
-        screenName="Suggestion Form"
-      >
-        <View style={styles.buttonWrapper}>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonTop]}
-            onPress={() =>
-              onSavePress('Do you want to save the suggestion?', 'Data saved successfully', 'N')
-            }>
-            <Text style={styles.buttonText}>
-              Save
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonBottom]}
-            onPress={() =>
-              onSavePress(
-                'Submitting will send the suggestion to leader',
-                'Suggestion saved and sent to leader',
-                'Y'
-              )
-            }>
-            <Text style={styles.buttonText}>
-              Save and Send to Leader
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </VoiceGuidedField>
-
-
-
-    </ScrollView>
+      </ScrollView>
+      <VoiceControlButton />
+    </View>
   );
 }
 

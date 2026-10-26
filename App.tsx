@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { setApiConfig } from './src/context/ApiConfig';
 import { setupAuthInterceptor } from './src/services/axios/authInterceptor';
 import { ThemeProvider } from './src/theme/ThemeContext';
+import { VoiceControlProvider } from './src/context/VoiceControlContext';
 //enableScreens(true);
 const Drawer = createDrawerNavigator();
 
@@ -55,6 +56,7 @@ useEffect(() => {
     <GridProvider>
     <FieldAssistProvider>
     <VoiceGuideProvider>
+      <VoiceControlProvider>
     <NavigationContainer>
       <Drawer.Navigator
         initialRouteName="Main"
@@ -70,7 +72,9 @@ useEffect(() => {
       </Drawer.Navigator>
       {/* <AppNavigator /> */}
     </NavigationContainer>
+    
     <FieldAssistBar />
+    </VoiceControlProvider>
     </VoiceGuideProvider>
     </FieldAssistProvider>
     </GridProvider>
