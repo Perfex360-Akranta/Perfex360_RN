@@ -67,6 +67,20 @@ import Tts from 'react-native-tts';
 
 let initialized = false;
 
+
+type Lifecycle = { start?: () => void; end?: () => void };
+const lifecycleListeners = new Set<Lifecycle>();
+let activeSpeaks = 0;
+
+export function onSpeechLifecycle(handlers: Lifecycle): () => void {
+  lifecycleListeners.add(handlers);
+  return () => {
+    lifecycleListeners.delete(handlers);
+  };
+}
+
+const notify = (which: 'start' | 'end') => lifecycleListeners.forEach(l => l[which]?.());
+
 // Safety net: if no finish/cancel event ever arrives, don't hang forever
 const SPEAK_TIMEOUT = 20000;
 
@@ -92,6 +106,11 @@ export async function initVoiceGuide() {
 export async function speak(text: string): Promise<void> {
   await initVoiceGuide();
 
+   if (activeSpeaks === 0) {
+    notify('start');
+  }
+  activeSpeaks++;
+
   return new Promise<void>(resolve => {
     let finished = false;
     let idKnown = false;
@@ -107,6 +126,10 @@ export async function speak(text: string): Promise<void> {
       }
       finished = true;
       clearTimeout(timer);
+       activeSpeaks = Math.max(0, activeSpeaks - 1);
+      if (activeSpeaks === 0) {
+        notify('end');
+      }
       handlers.forEach(([evt, handler], i) => {
         const sub = subs[i];
         if (sub && typeof sub.remove === 'function') {
