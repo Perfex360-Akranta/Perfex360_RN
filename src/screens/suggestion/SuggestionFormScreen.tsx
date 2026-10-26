@@ -21,6 +21,11 @@ import { useVoiceGuide } from '../../context/VoiceGuideContext';
 import { VoiceGuidedField } from '../../components/assist/VoiceGuidedField';
 import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
 import { useAppTheme } from '../../theme/ThemeContext';
+import SuggestionImageUpload, { PickedImage } from '../../components/forms/SuggestionImageUpload';
+import { uploadSuggestionImage } from '../../services/api/suggestionImageApi';
+
+import { fromByteArray } from 'base64-js';
+import { getSuggestionImage } from '../../services/api/suggestionImageApi';
 
 interface SuggestionForm {
   keyid: string;
@@ -87,7 +92,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const [selectedCellId, setSelectedCellId] = useState('');
   const suggestedByRef = useRef<any>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
+  const [suggestionImage, setSuggestionImage] = useState<PickedImage | null>(null);
 
+  const [existingImageUri, setExistingImageUri] = useState<string | null>(null);
   const openScanner = () => {
         navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
     };
@@ -269,6 +276,31 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       setSaving(true);
       const responseData = await saveSuggestion(payload);
       console.log('responseData:', responseData);
+
+            // Upload the selected image (if any) against the saved suggestion
+      if (suggestionImage && responseData?.keyid) {
+        try {
+          const employeeId = currentUser.employeeId;
+
+          if (!employeeId) {
+            throw new Error('Employee ID is missing.');
+          }
+
+          await uploadSuggestionImage(
+            responseData.keyid,
+            suggestionImage,
+            'KSB',
+            suggestionImage.type
+          );
+        } catch (imageError) {
+          console.log('image upload error:', imageError);
+          Alert.alert(
+            'Image Upload Failed',
+            'The suggestion was saved, but the image could not be uploaded.'
+          );
+        }
+      }
+
       stopGuidance(); // no more field prompts after a successful save
       const spoken = announceSuccess('Suggestion');
       Alert.alert('Success', successMessage);
@@ -461,6 +493,21 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       setIsOthers(existing.others === 'Y');
       setIsNonJhEsp(existing.nonjhesp === 'Y');
       setMailForApproval(existing.mailForApproval === 'Y');
+
+      try {
+  const imageBytes = await getSuggestionImage(
+    keyid,
+    'KSB',
+    'KSB', // Must match the imageType stored during upload
+  );
+
+  const base64 = fromByteArray(new Uint8Array(imageBytes));
+  setExistingImageUri(`data:image/jpeg;base64,${base64}`);
+} catch (error: any) {
+  // A suggestion may not have an image yet.
+  setExistingImageUri(null);
+  console.log('No existing suggestion image:', error?.message);
+}
     } catch (error) {
       console.log('load full suggestion error:', error);
       Alert.alert('Error', 'Could not load the suggestion for editing.');
@@ -768,6 +815,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
           }
         />
       </VoiceGuidedField>
+
+      <SuggestionImageUpload value={suggestionImage}  existingImageUrl={existingImageUri} onChange={setSuggestionImage} />
 
       <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, marginBottom: 12 }}>
         <CheckBox

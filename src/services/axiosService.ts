@@ -37,14 +37,37 @@ export const getById = async (
 
 
 // POST
+// export const post = async (
+//   endpoint: string,
+//   data?: any,
+// ) => {
+
+//   const response = await api.post(
+//     endpoint,
+//     data,
+//   );
+
+//   return response.data;
+// };
+
 export const post = async (
   endpoint: string,
   data?: any,
 ) => {
+  const isFormData =
+    typeof FormData !== 'undefined' &&
+    data instanceof FormData;
 
   const response = await api.post(
     endpoint,
     data,
+    isFormData
+      ? {
+          headers: {
+            'Content-Type': undefined,
+          },
+        }
+      : undefined,
   );
 
   return response.data;

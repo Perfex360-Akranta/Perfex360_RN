@@ -64,7 +64,7 @@ const FunctionLocationScanner: React.FC<EquipmentHeaderProps> = ({
     }, [originalid]);
 
     useEffect(() => {
-        if (flid && showFlid) {
+        if (flid && !fnlnId) {
         loadFunctionalLocation(undefined,flid);
         setShowFlid(false);
         }

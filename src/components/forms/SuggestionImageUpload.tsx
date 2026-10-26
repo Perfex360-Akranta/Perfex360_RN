@@ -15,6 +15,8 @@ import {
   useCameraPermission,
   usePhotoOutput,
 } from 'react-native-vision-camera';
+import ImageResizer from 'react-native-image-resizer';
+import RNFS from 'react-native-fs';
 
 export interface PickedImage {
   uri: string;
@@ -24,10 +26,11 @@ export interface PickedImage {
 
 interface Props {
   value: PickedImage | null;
+  existingImageUrl? :string | null;
   onChange: (image: PickedImage | null) => void;
 }
 
-export default function SuggestionImageUpload({ value, onChange }: Props) {
+export default function SuggestionImageUpload({ value,existingImageUrl, onChange }: Props) {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [takingPhoto, setTakingPhoto] = useState(false);
@@ -35,7 +38,7 @@ export default function SuggestionImageUpload({ value, onChange }: Props) {
   const device = useCameraDevice('back');
   const photoOutput = usePhotoOutput();
   const { hasPermission, requestPermission } = useCameraPermission();
-
+  const imageUri = value?.uri ?? existingImageUrl;
   const openCamera = async () => {
     try {
       if (!hasPermission) {
@@ -77,14 +80,44 @@ export default function SuggestionImageUpload({ value, onChange }: Props) {
     try {
       const photo = await photoOutput.capturePhoto({}, {});
 
-      try {
+      
         const filePath = await photo.saveToTemporaryFileAsync();
 
-        onChange({
-          uri: `file://${filePath}`,
-          name: `suggestion_${Date.now()}.jpg`,
-          type: 'image/jpeg',
-        });
+try {
+  const resizedImage = await ImageResizer.createResizedImage(
+    `file://${filePath}`,
+    1600,             // Maximum width
+    1600,             // Maximum height
+    'JPEG',
+    75,               // Quality: 75%
+    0,                // Rotation
+  );
+
+  const imagePath = resizedImage.uri.replace('file://', '');
+  const imageStat = await RNFS.stat(imagePath);
+
+  const maxSize = 5 * 1024 * 1024;
+
+  if (Number(imageStat.size) > maxSize) {
+    Alert.alert(
+      'Image Too Large',
+      'The image exceeds 5 MB. Please capture another photo.',
+    );
+    return;
+  }
+
+  onChange({
+    uri: resizedImage.uri,
+    name: `suggestion_${Date.now()}.jpg`,
+    type: 'image/jpeg',
+  });
+        // const filePath = await photo.saveToTemporaryFileAsync();
+
+        // onChange({
+        //   uri: `file://${filePath}`,
+        //   name: `suggestion_${Date.now()}.jpg`,
+        //   type: 'image/jpeg',
+        // });
 
         setCameraVisible(false);
       } finally {
@@ -108,11 +141,11 @@ export default function SuggestionImageUpload({ value, onChange }: Props) {
         <TouchableOpacity style={styles.uploadBtn} onPress={openCamera}>
           <MaterialIcons name="upload" size={20} color="#fff" />
           <Text style={styles.btnText}>
-            {value ? 'Change Image' : 'Upload Image'}
+            {imageUri ? 'Change Image' : 'Upload Image'}
           </Text>
         </TouchableOpacity>
 
-        {value && (
+        {imageUri && (
           <TouchableOpacity
             style={styles.previewBtn}
             onPress={() => setPreviewVisible(true)}>
@@ -182,9 +215,9 @@ export default function SuggestionImageUpload({ value, onChange }: Props) {
             <MaterialIcons name="close" size={26} color="white" />
           </TouchableOpacity>
 
-          {value && (
+          {imageUri && (
             <Image
-              source={{ uri: value.uri }}
+              source={{ uri: imageUri }}
               style={styles.previewImage}
               resizeMode="contain"
             />

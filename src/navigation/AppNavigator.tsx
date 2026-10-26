@@ -35,6 +35,7 @@ import GeneralMaintenanceBooking from '../screens/GeneralMaintenance/generalmain
 import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalmaintenancecompletion';
 import CltiSchedule from '../screens/CLTI/cltiSchedule';
 import { useAppTheme } from '../theme/ThemeContext';
+import ActionPlanCompletion from '../screens/ActionPlan/ActionPlanCompletion';
 
 export type RootStackParamList = {
   Login: undefined;
