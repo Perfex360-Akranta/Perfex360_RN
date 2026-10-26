@@ -1,9 +1,18 @@
 
+
+
+
+
+
+
+
+
+
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 export const themeConfig = {
   light: {
-    background: '#FAF7F2',
+    background:'#F1F3F5', // Light grey '#FAF7F2',
     surface: '#FFFFFF',
     surfaceSecondary: '#F4F6F9',
     surfaceElevated: '#FFFFFF',

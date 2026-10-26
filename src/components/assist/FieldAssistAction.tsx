@@ -125,7 +125,7 @@ export default function FieldAssistAction({ field,
   return (
     <View style={[styles.container, style]}>
       {/* {isMenuOpen ? ( */}
-      {showActions ? (
+      {showActions && !isListening ? (
         <Animated.View
           style={[
             styles.horizontalBar,
