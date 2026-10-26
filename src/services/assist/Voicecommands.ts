@@ -161,10 +161,13 @@ export function parseCommand(raw: string): Command {
   const t = normalize(raw);
   if (!t) return { type: 'unknown' };
 
-  if (/^(save and send( to leader)?|send to leader|submit to leader)$/.test(t)) {
+  if (
+    /^(save|submit)( (it|this|that|the|my))*( suggestion| record| records| form| data)? and send( it)?( to( the)? (leader|lead|leaders))?$/.test(t) ||
+    /^send( it)? to( the)? (leader|lead|leaders)$/.test(t)
+  ) {
     return { type: 'save', send: true };
   }
-  if (/^(save|submit|save it|save suggestion|save the suggestion)$/.test(t)) {
+  if (/^(save|submit)( (it|this|that|the|my))*( suggestion| record| records| form| data)?$/.test(t)) {
     return { type: 'save', send: false };
   }
   if (/^(stop listening|stop voice|stop voice control|exit voice|voice off)$/.test(t)) {

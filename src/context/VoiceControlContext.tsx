@@ -204,7 +204,9 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 if (!busyRef.current && !speakingRef.current) {
                     scheduleRestart(600);
                 }
+                console.log('[VoiceControl] partial:', e?.value?.[0]);
             };
+            
 
             try {
                 await Voice.cancel();
@@ -313,27 +315,27 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
             .find(c => c.kind === 'panel') ?? null;
 
     const resolveControl = (target: string, minScore = 0.75): VoiceControlDef | null => {
-    const t = normalize(target).replace(/^(the|my) /, '');
-    if (!t) {
-        return null;
-    }
-    let best: VoiceControlDef | null = null;
-    let bestScore = 0;
-    for (const ref of Array.from(controlsRef.current.values())) {
-        const ctl = ref.current;
-        const names = [ctl.label, ...ctl.aliases, ...(ctl.keywords ?? [])];
-        let s = fieldScore(t, ctl.label, names);
-        for (const n of names) {
-            s = Math.max(s, similarity(t, n, false));
+        const t = normalize(target).replace(/^(the|my) /, '');
+        if (!t) {
+            return null;
         }
-        if (s > bestScore) {
-            bestScore = s;
-            best = ctl;
+        let best: VoiceControlDef | null = null;
+        let bestScore = 0;
+        for (const ref of Array.from(controlsRef.current.values())) {
+            const ctl = ref.current;
+            const names = [ctl.label, ...ctl.aliases, ...(ctl.keywords ?? [])];
+            let s = fieldScore(t, ctl.label, names);
+            for (const n of names) {
+                s = Math.max(s, similarity(t, n, false));
+            }
+            if (s > bestScore) {
+                bestScore = s;
+                best = ctl;
+            }
         }
-    }
-    console.log('[VoiceControl] resolve', t, '->', best?.id, bestScore.toFixed(2));
-    return bestScore >= minScore ? best : null;
-};
+        console.log('[VoiceControl] resolve', t, '->', best?.id, bestScore.toFixed(2));
+        return bestScore >= minScore ? best : null;
+    };
 
     const closeActive = () => {
         const prev = getCtl(activeIdRef.current);
@@ -370,13 +372,14 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
         }
     };
 
-    const finishSelect = (ctl: VoiceControlDef, option: Option): string => {
+    const finishSelect = (ctl: VoiceControlDef, option: Option): string | null => {
         ctl.select?.(option.value);
         ctl.close?.();
         pendingRef.current = null;
         activeIdRef.current = null;
         modeRef.current = { type: 'command' };
-        return `${option.label} is selected`;
+        return null;
+        //return `${option.label} is selected`;
     };
 
     const process = async (heard: string): Promise<string | null> => {
@@ -397,7 +400,8 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 if (cmd.type === 'stopDictation') {
                     modeRef.current = { type: 'command' };
                     activeIdRef.current = null;
-                    return `${ctl.label} entered`;
+                    return null;
+                    //return `${ctl.label} entered`;
                 }
                 if (/^clear( text)?$/.test(normalize(heard))) {
                     ctl.setText?.('');

@@ -26,11 +26,11 @@ export interface PickedImage {
 
 interface Props {
   value: PickedImage | null;
-  existingImageUrl? :string | null;
+  existingImageUrl?: string | null;
   onChange: (image: PickedImage | null) => void;
 }
 
-export default function SuggestionImageUpload({ value,existingImageUrl, onChange }: Props) {
+export default function SuggestionImageUpload({ value, existingImageUrl, onChange }: Props) {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [takingPhoto, setTakingPhoto] = useState(false);
@@ -80,37 +80,37 @@ export default function SuggestionImageUpload({ value,existingImageUrl, onChange
     try {
       const photo = await photoOutput.capturePhoto({}, {});
 
-      
-        const filePath = await photo.saveToTemporaryFileAsync();
 
-try {
-  const resizedImage = await ImageResizer.createResizedImage(
-    `file://${filePath}`,
-    1600,             // Maximum width
-    1600,             // Maximum height
-    'JPEG',
-    75,               // Quality: 75%
-    0,                // Rotation
-  );
+      const filePath = await photo.saveToTemporaryFileAsync();
 
-  const imagePath = resizedImage.uri.replace('file://', '');
-  const imageStat = await RNFS.stat(imagePath);
+      try {
+        const resizedImage = await ImageResizer.createResizedImage(
+          `file://${filePath}`,
+          1600,             // Maximum width
+          1600,             // Maximum height
+          'JPEG',
+          75,               // Quality: 75%
+          0,                // Rotation
+        );
 
-  const maxSize = 5 * 1024 * 1024;
+        const imagePath = resizedImage.uri.replace('file://', '');
+        const imageStat = await RNFS.stat(imagePath);
 
-  if (Number(imageStat.size) > maxSize) {
-    Alert.alert(
-      'Image Too Large',
-      'The image exceeds 5 MB. Please capture another photo.',
-    );
-    return;
-  }
+        const maxSize = 5 * 1024 * 1024;
 
-  onChange({
-    uri: resizedImage.uri,
-    name: `suggestion_${Date.now()}.jpg`,
-    type: 'image/jpeg',
-  });
+        if (Number(imageStat.size) > maxSize) {
+          Alert.alert(
+            'Image Too Large',
+            'The image exceeds 5 MB. Please capture another photo.',
+          );
+          return;
+        }
+
+        onChange({
+          uri: resizedImage.uri,
+          name: `suggestion_${Date.now()}.jpg`,
+          type: 'image/jpeg',
+        });
         // const filePath = await photo.saveToTemporaryFileAsync();
 
         // onChange({

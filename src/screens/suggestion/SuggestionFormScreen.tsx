@@ -33,6 +33,7 @@ import { fromByteArray } from 'base64-js';
 import { getSuggestionImage, uploadSuggestionImage } from '../../services/api/suggestionImageApi';
 import { useAppTheme } from '../../theme/ThemeContext';
 
+
 interface SuggestionForm {
   keyid: string;
   flid: string;
@@ -81,7 +82,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const { colors } = useAppTheme();
   const { currentUser, currentRole } = useGrid();
   const editRecord = route?.params?.editRecord;
-   const originalId = route?.params?.originalId;
+  const originalId = route?.params?.originalId;
   const [isOthers, setIsOthers] = useState(false);
   const [isNonJhEsp, setIsNonJhEsp] = useState(false);
   const [isMailForApproval, setMailForApproval] = useState(true);
@@ -101,23 +102,48 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const themeCategoryRef = useRef<any>(null);
   const [isEditLoading, setIsEditLoading] = useState(false);
 
-   const [suggestionImage, setSuggestionImage] = useState<PickedImage | null>(null);
-   const [existingImageUri, setExistingImageUri] = useState<string | null>(null);
+  const [suggestionImage, setSuggestionImage] = useState<PickedImage | null>(null);
+  const [existingImageUri, setExistingImageUri] = useState<string | null>(null);
 
-   const openScanner = () => {
-        navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
-    };
+  const openScanner = () => {
+    navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
+  };
   const { announceFailure } = useVoiceGuide();
 
-  // Voice control is switched on as soon as the screen opens (runs once)
-  const { startListening, stopListening } = useVoiceControl();
+  // Voice control is switched on as soon as the screen opens (runs once) hari
+  // const { startListening, stopListening } = useVoiceControl();
+  // useEffect(() => {
+  //   startListening();
+  //   return () => {
+  //     stopListening(true);
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
+  // Voice control starts OFF. The user switches it on with the mic button.
+  const { listening, startListening, stopListening } = useVoiceControl();
+  const listeningRef = useRef(listening);
+  listeningRef.current = listening;
+  const resumeVoiceRef = useRef(false);
+
   useEffect(() => {
-    startListening();
+    // the scanner is a separate screen: pause voice while it is open, resume after
+    const unsubBlur = navigation.addListener('blur', () => {
+      resumeVoiceRef.current = listeningRef.current;
+      stopListening(true);
+    });
+    const unsubFocus = navigation.addListener('focus', () => {
+      if (resumeVoiceRef.current) {
+        resumeVoiceRef.current = false;
+        startListening();
+      }
+    });
     return () => {
+      unsubBlur();
+      unsubFocus();
       stopListening(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation]);
 
   const [form, setForm] = useState<SuggestionForm>({
     keyid: '',
@@ -205,7 +231,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       return false;
     };
 
-    if (!form.elementid) return fail('JH is required');
+    if (!form.elementid) return fail('Please scan the JH QR code');
     if (!form.kaizen.trim()) return fail('Suggestion is required');
     if (!form.suggestedby) return fail('Suggested By is required');
 
@@ -251,29 +277,29 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       setSaving(true);
       const responseData = await saveSuggestion(payload);
       console.log('responseData:', responseData);
-       // Upload the selected image (if any) against the saved suggestion
-            if (suggestionImage && responseData?.keyid) {
-              try {
-                const employeeId = currentUser.employeeId;
-      
-                if (!employeeId) {
-                  throw new Error('Employee ID is missing.');
-                }
-      
-                await uploadSuggestionImage(
-                  responseData.keyid,
-                  suggestionImage,
-                  'KSB',
-                  suggestionImage.type
-                );
-              } catch (imageError) {
-                console.log('image upload error:', imageError);
-                Alert.alert(
-                  'Image Upload Failed',
-                  'The suggestion was saved, but the image could not be uploaded.'
-                );
-              }
-            }
+      // Upload the selected image (if any) against the saved suggestion
+      if (suggestionImage && responseData?.keyid) {
+        try {
+          const employeeId = currentUser.employeeId;
+
+          if (!employeeId) {
+            throw new Error('Employee ID is missing.');
+          }
+
+          await uploadSuggestionImage(
+            responseData.keyid,
+            suggestionImage,
+            'KSB',
+            suggestionImage.type
+          );
+        } catch (imageError) {
+          console.log('image upload error:', imageError);
+          Alert.alert(
+            'Image Upload Failed',
+            'The suggestion was saved, but the image could not be uploaded.'
+          );
+        }
+      }
       const spoken = speak(spokenSuccess ?? 'Suggestion completed successfully');
       Alert.alert('Success', successMessage);
 
@@ -468,7 +494,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
           'KSB',
           'KSB', // Must match the imageType stored during upload
         );
-      
+
         const base64 = fromByteArray(new Uint8Array(imageBytes));
         setExistingImageUri(`data:image/jpeg;base64,${base64}`);
       } catch (error: any) {
@@ -502,18 +528,14 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   });
 
   useRegisterVoiceControl({
-    id: 'functionalLocation',
-    label: 'functional location',
-    aliases: ['functional location', 'function location', 'functional', 'f l'],
-    keywords: ['function', 'funtion', 'functions', 'location', 'locations', 'loca', 'fl'],
+    id: 'qrScanner',
+    label: 'QR scanner',
+    aliases: ['scanner', 'qr scanner', 'scan qr', 'scan', 'qr code', 'qr', 'functional location', 'location'],
+    keywords: ['q r', 'cure', 'queue are', 'skanner', 'scanning', 'barcode', 'camera', 'function', 'functional', 'funtion', 'loca'],
     kind: 'panel',
-    open: () => functionalLocationRef.current?.open?.(),
-    close: () => {
-      functionalLocationRef.current?.close?.();
-      return 'Functional location closed';
-    },
-    confirm: () => functionalLocationRef.current?.submit?.(),
-    cancel: () => functionalLocationRef.current?.close?.(),
+    open: openScanner,
+    close: () => 'Use the back button to close the scanner',
+    confirm: () => 'Nothing to confirm',
   });
 
   useRegisterVoiceControl(
@@ -534,9 +556,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     dropdownDef(
       'suggestedBy',
       'suggested by',
-      ['suggested by', 'suggested', 'employee'],
+      ['suggested by', 'suggested', 'employee','by','emp'],
       suggestedByRef,
-      ['suggester', 'suggestor', 'by', 'employees', 'name'],
+      ['suggester', 'suggestor', 'by', 'employees', 'name','empoye'],
     ),
   );
 
@@ -544,7 +566,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     id: 'suggestion',
     label: 'suggestion',
     aliases: ['suggestion', 'kaizen'],
-    keywords: ['suggestions', 'idea', 'ideas', 'kaizen suggestion'],
+    keywords: ['suggestions', 'idea', 'ideas', 'kaizen suggestion','seggesti','suggon','sug','kyson','son'],
     kind: 'text',
     getText: () => form.kaizen,
     setText: v => updateField('kaizen', v),
@@ -554,7 +576,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     id: 'espNames',
     label: 'ESP names',
     aliases: ['esp names', 'esp name', 'esp'],
-    keywords: ['espn', 'esb', 'e s p', 'sp', 'names', 'name'],
+    keywords: ['espn', 'esb', 'e s p', 'sp', 'names', 'name','espnames'],
     kind: 'text',
     getText: () => form.espsname,
     setText: v => updateField('espsname', v),
@@ -620,13 +642,13 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={[
-    styles.container,
-    { backgroundColor: colors.background },
-  ]}>
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}>
 
         <VoiceGuidedField
           id="functionalLocation"
-          label="select functional location"
+          label="scan the  QR code"
           type="dropdown"
           isMandatory={true}
           order={1}
@@ -645,12 +667,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
             }}
           /> */}
           <FunctionLocationScanner
-                originalid={originalId}
-                flid={form.flid}
-                onScanPress={openScanner}
-                title="JH"
-                onFunctionLoaded={FunctionalLocation_SuccessCallback}
-            />
+            originalid={originalId}
+            flid={form.flid}
+            onScanPress={openScanner}
+            title="JH"
+            onFunctionLoaded={FunctionalLocation_SuccessCallback}
+          />
         </VoiceGuidedField>
 
         <VoiceGuidedField
@@ -717,7 +739,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
         </VoiceGuidedField>
 
         <View style={{ marginTop: 5 }}>
-          <Text style={[styles.label,{color:colors.text}]}>Benefit Area</Text>
+          <Text style={[styles.label, { color: colors.text }]}>Benefit Area</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
             {[
               { label: 'P', checked: isBenefitP },
@@ -733,12 +755,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                 style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View
                   style={[
-                  styles.customCheckbox,{backgroundColor:colors.background,borderColor:colors.border},
-                  item.checked && styles.customCheckboxChecked,
-                ]}>
+                    styles.customCheckbox, { backgroundColor: colors.background, borderColor: colors.border },
+                    item.checked && styles.customCheckboxChecked,
+                  ]}>
                   {item.checked && <Text style={styles.customCheckmark}>✓</Text>}
                 </View>
-                <Text style={[{color:colors.text}]}>{item.label}</Text>
+                <Text style={[{ color: colors.text }]}>{item.label}</Text>
               </View>
             ))}
           </View>
@@ -761,11 +783,11 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                 value={isOthers}
                 disabled={false}
                 tintColors={{
-    true: colors.primary,
-    false: colors.border,
-  }}
+                  true: colors.primary,
+                  false: colors.border,
+                }}
                 onValueChange={handleOthersChange}
-              /><Text style={[styles.label,{color:colors.text}]}>OTHERS</Text>
+              /><Text style={[styles.label, { color: colors.text }]}>OTHERS</Text>
             </View>
           </View>
 
@@ -818,12 +840,12 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
               <CheckBox
                 value={isNonJhEsp}
                 disabled={false}
-                 tintColors={{
-                true: colors.primary,
-                false: colors.border,
-              }}
+                tintColors={{
+                  true: colors.primary,
+                  false: colors.border,
+                }}
                 onValueChange={handleNonJhEspChange}
-              /><Text style={[styles.label,{color:colors.text}]}>Non JH Esp</Text>
+              /><Text style={[styles.label, { color: colors.text }]}>Non JH Esp</Text>
             </View>
 
           </View>
@@ -838,7 +860,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
           getValue={() => form.espsname}
           screenName="Suggestion Form"
         >
-          <Text style={[styles.label,{color:colors.text}]}>ESP Name's</Text>
+          <Text style={[styles.label, { color: colors.text }]}>ESP Name's</Text>
 
           <AssistTextInput
             multiline
@@ -851,7 +873,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
           />
         </VoiceGuidedField>
 
-        <SuggestionImageUpload value={suggestionImage}  existingImageUrl={existingImageUri} onChange={setSuggestionImage} />
+        <SuggestionImageUpload value={suggestionImage} existingImageUrl={existingImageUri} onChange={setSuggestionImage} />
         <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 10, marginBottom: 12 }}>
           <CheckBox
             value={isMailForApproval}
