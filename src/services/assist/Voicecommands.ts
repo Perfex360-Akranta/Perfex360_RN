@@ -8,6 +8,7 @@ export type Command =
   | { type: 'save'; send: boolean }
   | { type: 'stopListening' }
   | { type: 'stopDictation' }
+  | { type: 'skip' }
   | { type: 'confirm' }
   | { type: 'cancel'; target: string }
   | { type: 'help' }
@@ -162,8 +163,8 @@ export function parseCommand(raw: string): Command {
   if (!t) return { type: 'unknown' };
 
   if (
-    /^(save|submit)( (it|this|that|the|my))*( suggestion| record| records| form| data)? and send( it)?( to( the)? (leader|lead|leaders))?$/.test(t) ||
-    /^send( it)? to( the)? (leader|lead|leaders)$/.test(t)
+    /^(save|submit|send)( and| n)?( send| sent)?( it)?( to| too| 2)?( the| my)? leaders?$/.test(t) ||
+    /^save and sen[dt]$/.test(t)
   ) {
     return { type: 'save', send: true };
   }
@@ -178,6 +179,9 @@ export function parseCommand(raw: string): Command {
   }
   if (/^(help|what can i say)$/.test(t)) {
     return { type: 'help' };
+  }
+  if (/^(skip|skip it|skip this|skip this field|keep it|kipit|pit|next field)$/.test(t)) {
+    return { type: 'skip' };
   }
   if (/^(ok|okay|confirm|apply)$/.test(t)) {
     return { type: 'confirm' };

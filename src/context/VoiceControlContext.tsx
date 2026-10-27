@@ -12,6 +12,8 @@ import { AppState, PermissionsAndroid, Platform } from 'react-native';
 import Voice from '@dev-amirzubair/react-native-voice';
 import { speak, onSpeechLifecycle } from '../services/assist/voiceGuide';
 import { useVoiceGuide } from './VoiceGuideContext';
+
+
 import {
     Option,
     capitalizeFirst,
@@ -55,7 +57,9 @@ export type VoiceControlDef = {
 };
 
 type ControlRef = React.MutableRefObject<VoiceControlDef>;
-type ActionRef = React.MutableRefObject<() => void | Promise<void>>;
+//type ActionRef = React.MutableRefObject<() => void | Promise<void>>;
+export type VoiceActionResult = void | string | { skipped: boolean; say?: string };
+type ActionRef = React.MutableRefObject<() => VoiceActionResult | Promise<VoiceActionResult>>;
 
 type Mode =
     | { type: 'command' }
@@ -65,6 +69,9 @@ type Mode =
 export type VoiceControlContextValue = {
     listening: boolean;
     lastHeard: string;
+    activeControlId: string | null;
+    activateControl: (id: string) => void;
+
     startListening: () => Promise<void>;
     stopListening: (silent?: boolean) => Promise<void>;
     registerControl: (id: string, ref: ControlRef) => void;
@@ -112,6 +119,7 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
 
     const [listening, setListening] = useState(false);
     const [lastHeard, setLastHeard] = useState('');
+    const [activeControlId, setActiveControlId] = useState<string | null>(null);
 
     const controlsRef = useRef(new Map<string, ControlRef>());
     const actionsRef = useRef(new Map<string, ActionRef>());
@@ -123,12 +131,18 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
     const busyRef = useRef(false); // processing a command
     const speakingRef = useRef(false); // text-to-speech is talking
     const startingRef = useRef(false);
+    const startedRef = useRef(false);
+    const errorStreakRef = useRef(0);
+
+    const introRef = useRef(false);
+    const pendingActivateRef = useRef<string | null>(null);
 
     const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const utteranceRef = useRef<(heard: string) => void>(() => { });
     const startRef = useRef<() => void>(() => { });
+    const flushActivateRef = useRef<() => void>(() => { });
 
     // ---------- registry ----------
     const registerControl = useCallback((id: string, ref: ControlRef) => {
@@ -181,6 +195,8 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
             // bind every time, so this still works if another component (e.g. AssistTextInput) rebinds Voice
             Voice.onSpeechResults = (e: any) => {
                 clearWatchdog();
+                errorStreakRef.current = 0;
+                startedRef.current = false;
                 const heard = e?.value?.[0];
                 if (!sessionRef.current || speakingRef.current || busyRef.current || !heard) {
                     return;
@@ -191,6 +207,7 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 clearWatchdog();
                 const code = String(e?.error?.code ?? e?.error?.message ?? '');
                 console.log('[VoiceControl] speech error:', code);
+                startedRef.current = false;
                 if (!sessionRef.current) {
                     return;
                 }
@@ -202,30 +219,45 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 }
                 // no speech / no match / busy: just listen again
                 if (!busyRef.current && !speakingRef.current) {
-                    scheduleRestart(600);
+                    if (/(^|\D)11(\D|$)/.test(code)) {
+                        // recognizer service dropped: wait a little longer each time
+                        errorStreakRef.current += 1;
+                        scheduleRestart(Math.min(800 + errorStreakRef.current * 700, 4000));
+                    } else {
+                        scheduleRestart(600);
+                    }
                 }
-                console.log('[VoiceControl] partial:', e?.value?.[0]);
+                //console.log('[VoiceControl] partial:', e?.value?.[0]);
             };
-            
+            Voice.onSpeechPartialResults = () => {
+            }
+            Voice.onSpeechStart = () => {
+                errorStreakRef.current = 0;
+            };
+            Voice.onSpeechEnd = () => {
+                startedRef.current = false;
+            };
+            if (startedRef.current) {
+                startedRef.current = false;
+                try {
+                    await Voice.cancel();
+                } catch { }
+            }
+                await Voice.start('en-IN');
 
-            try {
-                await Voice.cancel();
-            } catch { }
-            await Voice.start('en-IN');
-
-            clearWatchdog();
-            watchdogRef.current = setTimeout(() => {
-                if (sessionRef.current && !busyRef.current && !speakingRef.current) {
-                    scheduleRestart(100);
-                }
-            }, WATCHDOG_MS);
-        } catch (error) {
-            console.warn('[VoiceControl] start failed:', error);
-            scheduleRestart(1500);
-        } finally {
-            startingRef.current = false;
-        }
-    }, [scheduleRestart]);
+                clearWatchdog();
+                watchdogRef.current = setTimeout(() => {
+                    if (sessionRef.current && !busyRef.current && !speakingRef.current) {
+                        scheduleRestart(100);
+                    }
+                }, WATCHDOG_MS);
+            } catch (error) {
+                console.warn('[VoiceControl] start failed:', error);
+                scheduleRestart(1500);
+            } finally {
+                startingRef.current = false;
+            }
+        }, [scheduleRestart]);
     startRef.current = startRecognizer;
 
     // Pause the mic while the app is talking, resume afterwards
@@ -243,6 +275,7 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
             end: () => {
                 speakingRef.current = false;
                 scheduleRestart(500);
+                flushActivateRef.current();
             },
         });
     }, [scheduleRestart]);
@@ -251,11 +284,14 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
     const stopListening = useCallback(async (silent?: boolean) => {
         const wasOn = sessionRef.current;
         sessionRef.current = false;
+        introRef.current = false;
+        pendingActivateRef.current = null;
         clearRestart();
         clearWatchdog();
         modeRef.current = { type: 'command' };
         pendingRef.current = null;
         activeIdRef.current = null;
+        setActiveControlId(null);
         setListening(false);
         try {
             await Voice.cancel();
@@ -280,8 +316,11 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
         activeIdRef.current = null;
         busyRef.current = false;
         setListening(true);
+        setActiveControlId(null);
         await speak('Voice control is on');
+        introRef.current = false;
         scheduleRestart(300);
+        flushActivateRef.current();
     }, [stopGuidance, scheduleRestart]);
 
     // Turn off when the app goes to the background; clean up on unmount
@@ -412,14 +451,18 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                     cmd.type === 'save' ||
                     (cmd.type === 'close' && (!cmd.target || !!resolveControl(cmd.target, 0.75))) ||
                     (cmd.type === 'open' && !!resolveControl(cmd.target, 0.75));
-                if (!isNav) {
+                const isSkip = cmd.type === 'skip';
+                if (!isNav && !isSkip) {
                     const text = capitalizeFirst(heard.trim());
                     const current = ctl.getText?.() ?? '';
                     ctl.setText?.(current ? `${current} ${text}` : text);
                     return null; // stay quiet between phrases
                 }
-                modeRef.current = { type: 'command' };
-                activeIdRef.current = null;
+                if (!isSkip) {
+                    // a real navigation command ends dictation; "skip" is decided by the screen below
+                    modeRef.current = { type: 'command' };
+                    activeIdRef.current = null;
+                }
             }
         }
 
@@ -563,12 +606,82 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
             }
             case 'help':
                 return HELP;
+            case 'skip': {
+                const action = actionsRef.current.get('skip');
+                if (!action) {
+                    return 'Skip is not available on this screen';
+                }
+                const result: any = await action.current();
+                const endCurrent = () => {
+                    closeActive(); // also closes a dropdown that is open
+                    modeRef.current = { type: 'command' };
+                    pendingRef.current = null;
+                };
+                if (result && typeof result === 'object') {
+                    if (result.skipped) {
+                        endCurrent();
+                    }
+                    // refused: the dictation or open list stays exactly as it was
+                    return result.say ?? null;
+                }
+                endCurrent();
+                return typeof result === 'string' ? result : null;
+            }
             case 'stopDictation':
                 return null;
             default:
                 return 'Sorry, say that again';
         }
     };
+
+    const syncActiveControl = () => {
+        const m = modeRef.current;
+        setActiveControlId(m.type === 'command' ? null : m.id);
+    };
+
+
+
+    const runPendingActivate = () => {
+        const id = pendingActivateRef.current;
+        if (!id) {
+            return;
+        }
+        if (!sessionRef.current) {
+            pendingActivateRef.current = null;
+            return;
+        }
+        if (busyRef.current || speakingRef.current || introRef.current) {
+            return; // retried when the current work finishes
+        }
+        pendingActivateRef.current = null;
+        const ctl = getCtl(id);
+        if (!ctl || activeIdRef.current === id) {
+            return;
+        }
+        console.log('[VoiceControl] auto-activate', id);
+        busyRef.current = true;
+        (async () => {
+            try {
+                const message = activate(ctl);
+                syncActiveControl();
+                await say(message);
+            } catch (error) {
+                console.warn('[VoiceControl] auto-activate failed:', error);
+            } finally {
+                busyRef.current = false;
+                scheduleRestart(300);
+            }
+        })();
+    };
+    flushActivateRef.current = runPendingActivate;
+
+    const activateControl = useCallback((id: string) => {
+        if (!sessionRef.current) {
+            return;
+        }
+        pendingActivateRef.current = id;
+        flushActivateRef.current();
+    }, []);
 
     const handleUtterance = async (heard: string) => {
         busyRef.current = true;
@@ -577,6 +690,7 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
         console.log('[VoiceControl] heard:', heard, 'mode:', modeRef.current.type);
         try {
             const reply = await process(heard);
+            syncActiveControl();
             if (reply) {
                 await say(reply);
             }
@@ -584,8 +698,10 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
             console.warn('[VoiceControl] command failed:', error);
             await say('Sorry, something went wrong');
         } finally {
+            syncActiveControl();
             busyRef.current = false;
             scheduleRestart(300);
+            flushActivateRef.current();
         }
     };
     utteranceRef.current = handleUtterance;
@@ -594,6 +710,8 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
         () => ({
             listening,
             lastHeard,
+            activeControlId,
+            activateControl,
             startListening,
             stopListening,
             registerControl,
@@ -604,6 +722,8 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
         [
             listening,
             lastHeard,
+            activeControlId,
+            activateControl,
             startListening,
             stopListening,
             registerControl,
@@ -642,7 +762,7 @@ export function useRegisterVoiceControl(def: VoiceControlDef, enabled = true) {
 }
 
 /** Register a screen action such as 'save' or 'saveAndSend'. */
-export function useRegisterVoiceAction(name: string, handler: () => void | Promise<void>) {
+export function useRegisterVoiceAction(name: string, handler: () => VoiceActionResult | Promise<VoiceActionResult>) {
     const { registerAction, unregisterAction } = useVoiceControl();
     const ref = useRef(handler);
     ref.current = handler;

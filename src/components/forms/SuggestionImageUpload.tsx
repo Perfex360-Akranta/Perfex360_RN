@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -28,205 +28,216 @@ interface Props {
   value: PickedImage | null;
   existingImageUrl?: string | null;
   onChange: (image: PickedImage | null) => void;
+  onCameraVisibleChange?: (visible: boolean) => void;
+}
+export interface SuggestionImageUploadHandle {
+  open: () => void;
 }
 
-export default function SuggestionImageUpload({ value, existingImageUrl, onChange }: Props) {
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [cameraVisible, setCameraVisible] = useState(false);
-  const [takingPhoto, setTakingPhoto] = useState(false);
+// export default function SuggestionImageUpload({ value, existingImageUrl, onChange }: Props) {
+const SuggestionImageUpload = forwardRef<SuggestionImageUploadHandle, Props>(
+  function SuggestionImageUpload(
+    { value, existingImageUrl, onChange, onCameraVisibleChange },
+    ref,
+  ) {
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [cameraVisible, setCameraVisible] = useState(false);
+    const [takingPhoto, setTakingPhoto] = useState(false);
 
-  const device = useCameraDevice('back');
-  const photoOutput = usePhotoOutput();
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const imageUri = value?.uri ?? existingImageUrl;
-  const openCamera = async () => {
-    try {
-      if (!hasPermission) {
-        const granted = await requestPermission();
+    const device = useCameraDevice('back');
+    const photoOutput = usePhotoOutput();
+    const { hasPermission, requestPermission } = useCameraPermission();
+    const imageUri = value?.uri ?? existingImageUrl;
+    const openCamera = async () => {
+      try {
+        if (!hasPermission) {
+          const granted = await requestPermission();
 
-        if (!granted) {
-          Alert.alert(
-            'Camera Permission',
-            'Please allow camera access in your phone settings to take a photo.',
-          );
-          return;
+          if (!granted) {
+            Alert.alert(
+              'Camera Permission',
+              'Please allow camera access in your phone settings to take a photo.',
+            );
+            return;
+          }
         }
+
+        setCameraVisible(true);
+      } catch (error) {
+        Alert.alert(
+          'Error',
+          'Unable to request camera permission. Please try again.',
+        );
+      }
+    };
+
+    const capturePhoto = async () => {
+      if (takingPhoto) return;
+
+      if (!hasPermission) {
+        Alert.alert('Camera Permission', 'Please allow camera access.');
+        return;
       }
 
-      setCameraVisible(true);
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        'Unable to request camera permission. Please try again.',
-      );
-    }
-  };
+      if (!device) {
+        Alert.alert('Camera Error', 'No camera is available on this device.');
+        return;
+      }
 
-  const capturePhoto = async () => {
-    if (takingPhoto) return;
-
-    if (!hasPermission) {
-      Alert.alert('Camera Permission', 'Please allow camera access.');
-      return;
-    }
-
-    if (!device) {
-      Alert.alert('Camera Error', 'No camera is available on this device.');
-      return;
-    }
-
-    setTakingPhoto(true);
-
-    try {
-      const photo = await photoOutput.capturePhoto({}, {});
-
-
-      const filePath = await photo.saveToTemporaryFileAsync();
+      setTakingPhoto(true);
 
       try {
-        const resizedImage = await ImageResizer.createResizedImage(
-          `file://${filePath}`,
-          1600,             // Maximum width
-          1600,             // Maximum height
-          'JPEG',
-          75,               // Quality: 75%
-          0,                // Rotation
-        );
+        const photo = await photoOutput.capturePhoto({}, {});
 
-        const imagePath = resizedImage.uri.replace('file://', '');
-        const imageStat = await RNFS.stat(imagePath);
 
-        const maxSize = 5 * 1024 * 1024;
+        const filePath = await photo.saveToTemporaryFileAsync();
 
-        if (Number(imageStat.size) > maxSize) {
-          Alert.alert(
-            'Image Too Large',
-            'The image exceeds 5 MB. Please capture another photo.',
+        try {
+          const resizedImage = await ImageResizer.createResizedImage(
+            `file://${filePath}`,
+            1600,             // Maximum width
+            1600,             // Maximum height
+            'JPEG',
+            75,               // Quality: 75%
+            0,                // Rotation
           );
-          return;
+
+          const imagePath = resizedImage.uri.replace('file://', '');
+          const imageStat = await RNFS.stat(imagePath);
+
+          const maxSize = 5 * 1024 * 1024;
+
+          if (Number(imageStat.size) > maxSize) {
+            Alert.alert(
+              'Image Too Large',
+              'The image exceeds 5 MB. Please capture another photo.',
+            );
+            return;
+          }
+
+          onChange({
+            uri: resizedImage.uri,
+            name: `suggestion_${Date.now()}.jpg`,
+            type: 'image/jpeg',
+          });
+          // const filePath = await photo.saveToTemporaryFileAsync();
+
+          // onChange({
+          //   uri: `file://${filePath}`,
+          //   name: `suggestion_${Date.now()}.jpg`,
+          //   type: 'image/jpeg',
+          // });
+
+          setCameraVisible(false);
+        } finally {
+          photo.dispose();
         }
-
-        onChange({
-          uri: resizedImage.uri,
-          name: `suggestion_${Date.now()}.jpg`,
-          type: 'image/jpeg',
-        });
-        // const filePath = await photo.saveToTemporaryFileAsync();
-
-        // onChange({
-        //   uri: `file://${filePath}`,
-        //   name: `suggestion_${Date.now()}.jpg`,
-        //   type: 'image/jpeg',
-        // });
-
-        setCameraVisible(false);
+      } catch (error) {
+        Alert.alert(
+          'Camera Error',
+          error instanceof Error
+            ? error.message
+            : 'Unable to capture photo. Please try again.',
+        );
       } finally {
-        photo.dispose();
+        setTakingPhoto(false);
       }
-    } catch (error) {
-      Alert.alert(
-        'Camera Error',
-        error instanceof Error
-          ? error.message
-          : 'Unable to capture photo. Please try again.',
-      );
-    } finally {
-      setTakingPhoto(false);
-    }
-  };
+    };
 
-  return (
-    <View style={styles.wrapper}>
-      <View style={styles.row}>
-        <TouchableOpacity style={styles.uploadBtn} onPress={openCamera}>
-          <MaterialIcons name="upload" size={20} color="#fff" />
-          <Text style={styles.btnText}>
-            {imageUri ? 'Change Image' : 'Upload Image'}
-          </Text>
-        </TouchableOpacity>
-
-        {imageUri && (
-          <TouchableOpacity
-            style={styles.previewBtn}
-            onPress={() => setPreviewVisible(true)}>
-            <MaterialIcons name="visibility" size={20} color="#1976D2" />
-            <Text style={styles.previewText}>Preview</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {value && (
-        <Text style={styles.fileName} numberOfLines={1}>
-          {value.name}
-        </Text>
-      )}
-
-      {/* Camera modal: capture a new photo only */}
-      <Modal
-        visible={cameraVisible}
-        animationType="slide"
-        onRequestClose={() => setCameraVisible(false)}>
-        <View style={styles.cameraContainer}>
-          {hasPermission && device ? (
-            <Camera
-              style={StyleSheet.absoluteFill}
-              device={device}
-              isActive={cameraVisible}
-              outputs={[photoOutput]}
-            />
-          ) : (
-            <View style={styles.cameraMessage}>
-              <Text style={styles.cameraMessageText}>
-                {!hasPermission
-                  ? 'Camera permission is required.'
-                  : 'Waiting for the camera...'}
-              </Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={styles.cameraCloseBtn}
-            onPress={() => setCameraVisible(false)}>
-            <MaterialIcons name="close" size={28} color="white" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.captureBtn}
-            onPress={capturePhoto}
-            disabled={takingPhoto || !hasPermission || !device}>
-            <View style={styles.captureInner} />
-          </TouchableOpacity>
-
-          {takingPhoto && (
-            <Text style={styles.capturingText}>Capturing photo...</Text>
-          )}
-        </View>
-      </Modal>
-
-      {/* Existing full-screen preview */}
-      <Modal
-        visible={previewVisible}
-        animationType="fade"
-        onRequestClose={() => setPreviewVisible(false)}>
-        <View style={styles.previewContainer}>
-          <TouchableOpacity
-            style={styles.closeBtn}
-            onPress={() => setPreviewVisible(false)}>
-            <MaterialIcons name="close" size={26} color="white" />
+    return (
+      <View style={styles.wrapper}>
+        <View style={styles.row}>
+          <TouchableOpacity style={styles.uploadBtn} onPress={openCamera}>
+            <MaterialIcons name="upload" size={20} color="#fff" />
+            <Text style={styles.btnText}>
+              {imageUri ? 'Change Image' : 'Upload Image'}
+            </Text>
           </TouchableOpacity>
 
           {imageUri && (
-            <Image
-              source={{ uri: imageUri }}
-              style={styles.previewImage}
-              resizeMode="contain"
-            />
+            <TouchableOpacity
+              style={styles.previewBtn}
+              onPress={() => setPreviewVisible(true)}>
+              <MaterialIcons name="visibility" size={20} color="#1976D2" />
+              <Text style={styles.previewText}>Preview</Text>
+            </TouchableOpacity>
           )}
         </View>
-      </Modal>
-    </View>
-  );
-}
+
+        {value && (
+          <Text style={styles.fileName} numberOfLines={1}>
+            {value.name}
+          </Text>
+        )}
+
+        {/* Camera modal: capture a new photo only */}
+        <Modal
+          visible={cameraVisible}
+          animationType="slide"
+          onRequestClose={() => setCameraVisible(false)}>
+          <View style={styles.cameraContainer}>
+            {hasPermission && device ? (
+              <Camera
+                style={StyleSheet.absoluteFill}
+                device={device}
+                isActive={cameraVisible}
+                outputs={[photoOutput]}
+              />
+            ) : (
+              <View style={styles.cameraMessage}>
+                <Text style={styles.cameraMessageText}>
+                  {!hasPermission
+                    ? 'Camera permission is required.'
+                    : 'Waiting for the camera...'}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.cameraCloseBtn}
+              onPress={() => setCameraVisible(false)}>
+              <MaterialIcons name="close" size={28} color="white" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.captureBtn}
+              onPress={capturePhoto}
+              disabled={takingPhoto || !hasPermission || !device}>
+              <View style={styles.captureInner} />
+            </TouchableOpacity>
+
+            {takingPhoto && (
+              <Text style={styles.capturingText}>Capturing photo...</Text>
+            )}
+          </View>
+        </Modal>
+
+        {/* Existing full-screen preview */}
+        <Modal
+          visible={previewVisible}
+          animationType="fade"
+          onRequestClose={() => setPreviewVisible(false)}>
+          <View style={styles.previewContainer}>
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => setPreviewVisible(false)}>
+              <MaterialIcons name="close" size={26} color="white" />
+            </TouchableOpacity>
+
+            {imageUri && (
+              <Image
+                source={{ uri: imageUri }}
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+            )}
+          </View>
+        </Modal>
+      </View>
+    );
+  },
+);
+export default SuggestionImageUpload;
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 15 },
