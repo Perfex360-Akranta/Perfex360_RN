@@ -182,13 +182,12 @@ export default function EquipmentScanner({ navigation, route }: any) {
       }
 
       if (returnTo === 'Suggestion') {
-       
-        // navigation.navigate({
-        //   name: 'Suggestion',
-        //   params: { originalId: id },
-        //   merge: true,
-        // });
         navigation.popTo('Suggestion', { originalId: id });
+        return;
+      }
+
+       if (returnTo === 'OtgCapture') {
+        navigation.popTo('OtgCapture', { originalId: id });
         return;
       }
 

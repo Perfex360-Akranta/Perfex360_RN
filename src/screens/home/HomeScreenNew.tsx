@@ -40,6 +40,15 @@ const groups: CardGroup[] = [
     ],
   },
   {
+    label: 'On The Go',
+    band: '#CEDEF2',
+    icon: '#8FADD9',
+    items: [
+      { title: 'OTG Capture', subtitle: '', icon: 'lightbulb', screen: 'OtgCapture' },
+      { title: 'Modify', subtitle: 'Modify a OTG Capture', icon: 'edit', screen: 'OtgCaptureModify' },
+    ],
+  },
+  {
     label: 'Abnormality',
     band: '#D3EBDB',
     icon: '#9AC7C0',

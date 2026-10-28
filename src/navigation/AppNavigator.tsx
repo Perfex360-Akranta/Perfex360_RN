@@ -36,6 +36,8 @@ import GeneralMaintenanceCompletion from '../screens/GeneralMaintenance/generalm
 import CltiSchedule from '../screens/CLTI/cltiSchedule';
 import { useAppTheme } from '../theme/ThemeContext';
 import ActionPlanCompletion from '../screens/ActionPlan/ActionPlanCompletion';
+import OTGCaptureFormScreen from '../screens/suggestion/OtgCaptureScreen';
+import OtgCaptureModification from '../screens/suggestion/OtgCaptureModification';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -64,6 +66,8 @@ export type RootStackParamList = {
   GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
   Cltischedule: undefined;
   ActionPlanComp: undefined;
+  OtgCapture:{ editRecord?: any, originalId?:string } |undefined;
+  OtgCaptureModify:undefined;
 
   WorkOrderList: undefined;
 
@@ -108,42 +112,6 @@ export default function AppNavigator() {
           />
         </TouchableOpacity>
       ),
-      //      headerLeft: () => (
-      //   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      //     {navigation.canGoBack() && (
-      //       <TouchableOpacity
-      //         onPress={() => navigation.goBack()}
-      //         style={{ marginLeft: 5 }}>
-      //         <MaterialIcons
-      //           name="arrow-back"
-      //           size={28}
-      //           color="#1511d3"
-      //         />
-      //       </TouchableOpacity>
-      //     )}
-
-      //     {/* <TouchableOpacity
-      //       onPress={() => navigation.navigate('Menu')}
-      //       style={{ marginLeft: navigation.canGoBack() ? 15 : 5,marginRight: 10 }}>
-      //       <MaterialIcons
-      //         name="menu"
-      //         size={28}
-      //         color="#1511d3"
-      //       />
-      //     </TouchableOpacity> */}
-      //   </View>
-      // ),
-      //    headerLeft: () => (
-      //   <TouchableOpacity
-      //     onPress={() => navigation.navigate('Menu')}>
-      //     <MaterialIcons
-      //       name="menu"
-      //       size={28}
-      //       color="#1511d3"
-      //       style={{marginRight:10,}}
-      //     />
-      //   </TouchableOpacity>
-      // ),
     })}>
       <Stack.Screen
         name="Login"
@@ -335,6 +303,17 @@ export default function AppNavigator() {
         name="ActionPlanComp"
         component={ActionPlanCompletion}
         options={{ title: 'Action Plan Completion' }}
+      />
+
+       <Stack.Screen
+        name="OtgCapture"
+        component={OTGCaptureFormScreen}
+        options={{ title: 'OTG Capture' }}
+      />
+       <Stack.Screen
+        name="OtgCaptureModify"
+        component={OtgCaptureModification}
+        options={{ title: 'OTG Capture Modify' }}
       />
 
     </Stack.Navigator>

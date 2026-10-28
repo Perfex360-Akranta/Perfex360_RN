@@ -148,27 +148,34 @@ const SuggestionImageUpload = forwardRef<SuggestionImageUploadHandle, Props>(
       <View style={styles.wrapper}>
         <View style={styles.row}>
           <TouchableOpacity style={styles.uploadBtn} onPress={openCamera}>
-            <MaterialIcons name="upload" size={20} color="#fff" />
-            <Text style={styles.btnText}>
+         
+ 
+             <MaterialIcons name="image" size={20} color="#fff" />
+            {/* <Text style={styles.btnText}>
               {imageUri ? 'Change Image' : 'Upload Image'}
-            </Text>
+            </Text>  */}
           </TouchableOpacity>
 
           {imageUri && (
             <TouchableOpacity
               style={styles.previewBtn}
               onPress={() => setPreviewVisible(true)}>
-              <MaterialIcons name="visibility" size={20} color="#1976D2" />
-              <Text style={styles.previewText}>Preview</Text>
+                 <Image
+              source={{ uri: imageUri }}
+              style={{width:100,height:90}}
+              resizeMode="contain"
+            />
+              {/* <MaterialIcons name="visibility" size={20} color="#1976D2" />
+              <Text style={styles.previewText}>Preview</Text> */}
             </TouchableOpacity>
           )}
         </View>
 
-        {value && (
+        {/* {value && (
           <Text style={styles.fileName} numberOfLines={1}>
             {value.name}
           </Text>
-        )}
+        )} */}
 
         {/* Camera modal: capture a new photo only */}
         <Modal
@@ -251,14 +258,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   btnText: { color: '#fff', marginLeft: 6 },
-  previewBtn: {
+  // previewBtn: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   borderWidth: 1,
+  //   borderColor: '#1976D2',
+  //   paddingVertical: 9,
+  //   paddingHorizontal: 14,
+  //   borderRadius: 5,
+  //   marginLeft: 10,
+  // },
+   previewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#1976D2',
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: 5,
+    // paddingVertical: 9,
+    // paddingHorizontal: 14,
+    // borderRadius: 5,
     marginLeft: 10,
   },
   previewText: { color: '#1976D2', marginLeft: 6 },
