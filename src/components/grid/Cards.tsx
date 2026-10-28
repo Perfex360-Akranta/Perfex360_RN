@@ -12,6 +12,7 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useRef,
 } from 'react';
 
 import { functionCall } from '../../services/api/functionCallApi';
@@ -52,7 +53,7 @@ const {colors} = useAppTheme();
   const [headerRow, setHeaderRow] = useState<any>({});
   const [columns, setColumns] = useState<Column[]>([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -110,10 +111,9 @@ const {colors} = useAppTheme();
 
 
 
-
   useEffect(() => {
-    setFilter(prev => ({
-      ...prev,
+    let updatedForm = { 
+      ...filter,
       flid:  filter.flid !== '' ? filter.flid : (currentRole.flid ?? ''),
       fromDate: new Date(1801, 0, 1),
       toDate: new Date(2100, 11, 31),
@@ -122,20 +122,39 @@ const {colors} = useAppTheme();
       monthWise: 'Y',
       columnFilters: [],
       conditionParams: conditionParams,
-      reload: new Date(),
-    }));
+      reload: new Date(), };
+      setFilter(updatedForm);
+    // setFilter(prev => ({
+    //   ...prev,
+    //   flid:  filter.flid !== '' ? filter.flid : (currentRole.flid ?? ''),
+    //   fromDate: new Date(1801, 0, 1),
+    //   toDate: new Date(2100, 11, 31),
+    //   fromMonth: fromMonth,
+    //   toMonth: toMonth,
+    //   monthWise: 'Y',
+    //   columnFilters: [],
+    //   conditionParams: conditionParams,
+    //   reload: new Date(),
+    // }));
 
     //loadData();
 
-  }, []);
+  }, [procedureName]);
 
   useEffect(() => {
-     setCurrentPage(1);
-      setData([]);
-    //loadData();
+     
+    setData([]);
+    if(currentPage !==1){
+      setCurrentPage(1);
+    }else{
+      loadData();
+    }
+    
+
   }, [filter.reload]);
 
   useEffect(() => {
+    if(currentPage===0) return;
     loadData();
   }, [currentPage]);
 
@@ -145,7 +164,11 @@ const {colors} = useAppTheme();
 
   useImperativeHandle(ref, () => ({
     reload: () => {
-      loadData();
+      // loadData();
+       setFilter(prev => ({
+      ...prev,
+      reload: new Date(),
+    }));
     },
   }));
 

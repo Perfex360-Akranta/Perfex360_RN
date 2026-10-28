@@ -105,7 +105,7 @@ style={[
 <MaterialIcons name="sort" size={24} color="#8E24AA" />
 </TouchableOpacity>
 
-<TouchableOpacity onPress={Refresh} style={styles.refreshButton}>
+<TouchableOpacity onPress={() => Refresh()} style={styles.refreshButton}>
 <MaterialIcons name="refresh" size={24} color="#009688"/>
 </TouchableOpacity>
 

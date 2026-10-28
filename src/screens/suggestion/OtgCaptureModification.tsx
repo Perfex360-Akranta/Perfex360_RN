@@ -11,11 +11,11 @@ const OtgCaptureModification: React.FC = ({ navigation }: any) => {
     const { currentUser, currentRole } = useGrid();
     const cardsRef = useRef<any>(null);
 
-    useFocusEffect(
-        useCallback(() => {
-            cardsRef.current?.reload();
-        }, [])
-    );
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         cardsRef.current?.reload();
+    //     }, [])
+    // );
 
     const handleEdit = (record : GridEditProps) => {
         const row = record.row;
@@ -34,7 +34,6 @@ const OtgCaptureModification: React.FC = ({ navigation }: any) => {
                 onEdit={handleEdit}
                 ref={cardsRef}
                 conditionParams={{
-                    FLID: currentRole.flid,
                     CHK_DETECTBY: currentUser.employeeId,
                     SUGGESTEDBY: currentUser.employeeId,
                 }}

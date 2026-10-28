@@ -683,7 +683,9 @@ export default function OTGCaptureFormScreen({
 </View>
 
       {/* Existing floating microphone / voice controls */}
-      <VoiceControlButton />
+     <View style={styles.floatingVoiceButton}>
+  <VoiceControlButton inline={true} />
+</View>
     </View>
   );
 }
@@ -790,5 +792,12 @@ buttonText: {
   fontSize: 14,
   fontWeight: '600',
   textAlign: 'center',
+},
+floatingVoiceButton: {
+  position: 'absolute',
+  right: 16,
+  bottom: 90,
+  zIndex: 999,
+  elevation: 10,
 },
 });

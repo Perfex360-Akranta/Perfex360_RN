@@ -995,9 +995,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                 /><Text style={styles.checkLabel}>Non JH Esp</Text>
               </View>
 
-              <View style={{ marginLeft: 'auto', marginBottom: 4 }}>
+              {/* <View style={styles.floatingVoiceButton}>
                 <VoiceControlButton inline />
-              </View>
+              </View> */}
 
             </View>
           </VoiceGuidedField>
@@ -1092,6 +1092,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                     <Text style={styles.btnText}>Save and Send to Leader</Text>
                   )}
                 </TouchableOpacity>
+                <View style={styles.floatingVoiceButton}>
+                <VoiceControlButton inline />
+              </View>
               </View>
             </VoiceGuidedField>
           </FocusHighlight>
@@ -1257,4 +1260,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  floatingVoiceButton: {
+  position: 'absolute',
+  right: 16,
+  bottom: 90,
+  zIndex: 999,
+  elevation: 10,
+},
 });
