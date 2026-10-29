@@ -5,9 +5,9 @@ const ACCENT = '#1976D2';
 const ACCENT_RGB = '25, 118, 210';
 
 type Props = {
-  active: boolean; 
-  enabled?: boolean; 
-  badge?: string; 
+  active: boolean;
+  enabled?: boolean;
+  badge?: string;
   children: React.ReactNode;
   onLayout?: (e: LayoutChangeEvent) => void;
 };
@@ -24,15 +24,15 @@ export default function FocusHighlight({
 
   useEffect(() => {
     Animated.timing(appear, {
-      toValue: active ? 1 : 0,
+      toValue: enabled && active ? 1 : 0,
       duration: 260,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [active, appear]);
+  }, [active, enabled, appear]);
 
   useEffect(() => {
-    if (!active) {
+    if (!active || !enabled) {
       pulse.setValue(0);
       return;
     }
@@ -54,11 +54,7 @@ export default function FocusHighlight({
     );
     loop.start();
     return () => loop.stop();
-  }, [active, pulse]);
-
-  if (!enabled) {
-    return <View onLayout={onLayout}>{children}</View>;
-  }
+  }, [active, enabled, pulse]);
 
   const borderColor = appear.interpolate({
     inputRange: [0, 1],
@@ -71,19 +67,24 @@ export default function FocusHighlight({
   const glowOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.35] });
   const glowScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.02] });
 
+  // Note: Always return Animated.View to prevent unmounting/remounting child components
+  // when `enabled` toggles (e.g. when voice listening is paused/resumed).
   return (
-    <Animated.View onLayout={onLayout} style={[styles.shell, { borderColor, backgroundColor }]}>
-      {active && (
+    <Animated.View
+      onLayout={onLayout}
+      style={enabled ? [styles.shell, { borderColor, backgroundColor }] : undefined}
+    >
+      {enabled && active && (
         <Animated.View
           pointerEvents="none"
           style={[styles.glow, { opacity: glowOpacity, transform: [{ scale: glowScale }] }]}
         />
       )}
-      {active && <View pointerEvents="none" style={styles.bar} />}
+      {enabled && active && <View pointerEvents="none" style={styles.bar} />}
 
       {children}
 
-      {active && !!badge && (
+      {enabled && active && !!badge && (
         <View pointerEvents="none" style={styles.badge}>
           <Text style={styles.badgeText}>{badge}</Text>
         </View>

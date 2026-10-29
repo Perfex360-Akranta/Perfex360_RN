@@ -95,10 +95,16 @@ const FunctionalLocationScannerView = forwardRef<
   //   closeQrScanner: () => setScannerVisible(false),
   // }));
   useImperativeHandle(ref, () => ({
-    openFunctionalLocation: () => setShowFunctionalLocation(true),
-    openQrScanner: () => setScannerVisible(true),
+    openFunctionalLocation: () => {
+      console.log('[FunctionalLocationScannerView] openFunctionalLocation called');
+      setShowFunctionalLocation(true);
+    },
+    openQrScanner: () => {
+      console.log('[FunctionalLocationScannerView] openQrScanner called');
+      setShowQrScanner(true);
+    },
     closeFunctionalLocation: () => setShowFunctionalLocation(false),
-    closeQrScanner: () => setScannerVisible(false),
+    closeQrScanner: () => setShowQrScanner(false),
     submitFunctionalLocation: () =>
       filterRef.current?.submit?.() ?? 'Functional location is not open',
     isFunctionalLocationOpen: () => functionalOpenRef.current,

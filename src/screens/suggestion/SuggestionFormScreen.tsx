@@ -251,7 +251,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   const onSavePress = (confirmMessage: string, successMessage: string, approvalFlag: 'Y' | 'N') => {
     if (!validateForm()) {
-      return;
+        functionalLocationRef.current?.openQrScanner?.();
     }
 
     Alert.alert(
@@ -425,17 +425,17 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     ) {
       speak('That is not a JH. Please scan a JH QR code');
       Alert.alert('JH required', 'Please scan a JH QR code or select a JH in the functional location.');
-      return;
+        functionalLocationRef.current?.openQrScanner?.();
     }
 
     if (result?.cellId) {
       if (jhElementRef.current === result.elementId) {
-        return; // same JH reported again
+          functionalLocationRef.current?.openQrScanner?.(); // same JH reported again
       }
       jhElementRef.current = result.elementId;
     } else if (jhElementRef.current) {
       console.log('FL result ignored (no JH), keeping', jhElementRef.current);
-      return;
+        functionalLocationRef.current?.openQrScanner?.();
     }
 
     console.log('FL result:', result);
@@ -617,7 +617,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   useEffect(() => {
     if (!FOCUS_AUTO_ACTIVATE || !listening) {
-      return;
+        functionalLocationRef.current?.openQrScanner?.();
     }
     const id = focus.activeId;
     if (id && AUTO_STEPS.includes(id)) {
@@ -673,7 +673,11 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     aliases: ['functional location', 'location', 'function location', 'functional location panel', 'location panel', 'hierarchy', 'filter'],
     keywords: ['function', 'functional', 'funtion', 'loca', 'location', 'hierarchy', 'panel', 'filter'],
     kind: 'panel',
-    open: () => functionalLocationRef.current?.openFunctionalLocation(),
+    open: () => {
+      setTimeout(() => {
+        functionalLocationRef.current?.openFunctionalLocation?.();
+      }, 150);
+    },
     close: () => {
       functionalLocationRef.current?.closeFunctionalLocation();
       return 'Functional location closed';
@@ -686,10 +690,17 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   useRegisterVoiceControl({
     id: 'qrScanner',
     label: 'QR scanner',
-    aliases: ['qr scanner', 'scanner', 'scan qr', 'scan', 'qr code', 'qr', 'open qr scanner', 'barcode scanner'],
+    aliases: ['qr scanner', 'scanner', 'scan qr', 'scan', 'qr code', 'qr', 'qr code scanner', 'open qr scanner', 'open qr code scanner', 'barcode scanner'],
     keywords: ['q r', 'cure', 'queue are', 'skanner', 'scanning', 'barcode'],
     kind: 'panel',
-    open: () => functionalLocationRef.current?.openQrScanner(),
+    // open: () => functionalLocationRef.current?.openQrScanner(),
+    open: () => {
+      setTimeout(() => {
+  
+      }, 150);
+        functionalLocationRef.current?.openQrScanner?.();
+
+    },
     close: () => {
       functionalLocationRef.current?.closeQrScanner();
       return 'Scanner closed';
@@ -815,7 +826,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   const voiceSave = async (approvalFlag: 'Y' | 'N') => {
     if (!validateForm()) {
-      return;
+        functionalLocationRef.current?.openQrScanner?.();
     }
     await performSave(
       approvalFlag === 'Y' ? 'Suggestion saved and sent to leader' : 'Data saved successfully',
@@ -1029,7 +1040,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                     Alert.alert('Invalid Date', 'Future date not accepted');
                     updateField('date', new Date());
                     setDateResetKey(prev => prev + 1);
-                    return;
+                      functionalLocationRef.current?.openQrScanner?.();
                   }
 
                   updateField('date', v);
