@@ -31,12 +31,15 @@ import {
 import VoiceControlButton from '../../components/assist/VoiceControlButton';
 // NOTE: spelling must match the real file name (the provider imports 'Voicecommands')
 import { parseSpokenDate } from '../../services/assist/Voicecommands';
-import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
+//import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
 import SuggestionImageUpload, { PickedImage } from '../../components/forms/SuggestionImageUpload';
 import { fromByteArray } from 'base64-js';
 import { getSuggestionImage, uploadSuggestionImage } from '../../services/api/suggestionImageApi';
 import FocusHighlight from '../../components/assist/FocusHighlight';
 import { useFocusChain } from '../../services/assist/useFocusChain';
+import FunctionalLocationScannerView, {
+  FunctionalLocationScannerViewHandle,
+} from '../../components/FunctionLocation/FunctionLocationScannerView';
 
 interface SuggestionForm {
   keyid: string;
@@ -128,10 +131,11 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const [isJhSelected, setIsJhSelected] = useState(false);
   const [selectedCellId, setSelectedCellId] = useState('');
   const suggestedByRef = useRef<any>(null);
-  const functionalLocationRef = useRef<any>(null);
+  const functionalLocationRef = useRef<FunctionalLocationScannerViewHandle>(null);
   const themeCategoryRef = useRef<any>(null);
   const imageUploadRef = useRef<any>(null);
   const resumeAfterPickerRef = useRef(false);
+  const resumeAfterScannerRef = useRef(false);
   const jhElementRef = useRef('');
   const [isEditLoading, setIsEditLoading] = useState(false);
 
@@ -149,9 +153,9 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     };
   }, []);
 
-  const openScanner = () => {
-    navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
-  };
+  // const openScanner = () => {
+  //   navigation.navigate('EquipmentScanner', { returnTo: 'Suggestion' });
+  // };
   const { announceFailure } = useVoiceGuide();
 
   // Voice control starts OFF. The user switches it on with the mic button.
@@ -412,6 +416,18 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const FunctionalLocation_SuccessCallback = (
     result: any
   ) => {
+    if (
+      !result?.cellId &&
+      !jhElementRef.current &&
+      result?.flid &&
+      result.flid !== currentRole.flid &&
+      !editRecord
+    ) {
+      speak('That is not a JH. Please scan a JH QR code');
+      Alert.alert('JH required', 'Please scan a JH QR code or select a JH in the functional location.');
+      return;
+    }
+
     if (result?.cellId) {
       if (jhElementRef.current === result.elementId) {
         return; // same JH reported again
@@ -623,6 +639,18 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     }
   };
 
+  const onScannerVisibleChange = (visible: boolean) => {
+    if (visible) {
+      resumeAfterScannerRef.current = listeningRef.current;
+      if (listeningRef.current) {
+        stopListening(true);
+      }
+    } else if (resumeAfterScannerRef.current) {
+      resumeAfterScannerRef.current = false;
+      startListening();
+    }
+  };
+
   // ---------------- Voice control registration ----------------
   const dropdownDef = (
     id: string,
@@ -640,14 +668,35 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   });
 
   useRegisterVoiceControl({
+    id: 'functionalLocation',
+    label: 'functional location',
+    aliases: ['functional location', 'location', 'function location', 'functional location panel', 'location panel', 'hierarchy', 'filter'],
+    keywords: ['function', 'functional', 'funtion', 'loca', 'location', 'hierarchy', 'panel', 'filter'],
+    kind: 'panel',
+    open: () => functionalLocationRef.current?.openFunctionalLocation(),
+    close: () => {
+      functionalLocationRef.current?.closeFunctionalLocation();
+      return 'Functional location closed';
+    },
+    cancel: () => functionalLocationRef.current?.closeFunctionalLocation(),
+    confirm: () => functionalLocationRef.current?.submitFunctionalLocation?.(),
+    isOpen: () => !!functionalLocationRef.current?.isFunctionalLocationOpen?.(),
+  });
+
+  useRegisterVoiceControl({
     id: 'qrScanner',
     label: 'QR scanner',
-    aliases: ['scanner', 'qr scanner', 'scan qr', 'scan', 'qr code', 'qr', 'functional location', 'location'],
-    keywords: ['q r', 'cure', 'queue are', 'skanner', 'scanning', 'barcode', 'camera', 'function', 'functional', 'funtion', 'loca'],
+    aliases: ['qr scanner', 'scanner', 'scan qr', 'scan', 'qr code', 'qr', 'open qr scanner', 'barcode scanner'],
+    keywords: ['q r', 'cure', 'queue are', 'skanner', 'scanning', 'barcode'],
     kind: 'panel',
-    open: openScanner,
-    close: () => 'Use the back button to close the scanner',
-    confirm: () => 'Nothing to confirm',
+    open: () => functionalLocationRef.current?.openQrScanner(),
+    close: () => {
+      functionalLocationRef.current?.closeQrScanner();
+      return 'Scanner closed';
+    },
+    cancel: () => functionalLocationRef.current?.closeQrScanner(),
+    confirm: () => 'Point the camera at the QR code',
+    isOpen: () => !!functionalLocationRef.current?.isQrScannerOpen?.(),
   });
 
   useRegisterVoiceControl(
@@ -818,12 +867,13 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                 FunctionalLocation_SuccessCallback(value);
               }}
             /> */}
-            <FunctionLocationScanner
-              originalid={originalId}
+            <FunctionalLocationScannerView
+              ref={functionalLocationRef}
               flid={form.flid}
-              onScanPress={openScanner}
-              title="JH"
-              onFunctionLoaded={FunctionalLocation_SuccessCallback}
+              visible={true}
+              validate={{ isCell: true }}
+              onSelect={FunctionalLocation_SuccessCallback}
+              onScannerVisibleChange={onScannerVisibleChange}
             />
           </VoiceGuidedField>
         </FocusHighlight>
@@ -1093,8 +1143,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                   )}
                 </TouchableOpacity>
                 <View style={styles.floatingVoiceButton}>
-                <VoiceControlButton inline />
-              </View>
+                  <VoiceControlButton inline />
+                </View>
               </View>
             </VoiceGuidedField>
           </FocusHighlight>
@@ -1261,10 +1311,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   floatingVoiceButton: {
-  position: 'absolute',
-  right: 16,
-  bottom: 90,
-  zIndex: 999,
-  elevation: 10,
-},
+    position: 'absolute',
+    right: 16,
+    bottom: 90,
+    zIndex: 999,
+    elevation: 10,
+  },
 });

@@ -1,4 +1,4 @@
-import React, {useState, useRef,useEffect} from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Modal,
   View,
@@ -13,12 +13,13 @@ import { get } from '../../services/axiosService';
 import { useGrid } from '../../context/GridProvider';
 import MaterialIcons from '@react-native-vector-icons/material-icons/static';
 import { useAppTheme } from '../../theme/ThemeContext';
+import { useRegisterVoiceControl } from '../../context/VoiceControlContext';
 
 interface FunctionalLocation {
   companyId: string;
   locationId: string;
   sbuId: string;
-  pbuId: string ;
+  pbuId: string;
   sectionId: string;
   cellId: string;
   machineId: string;
@@ -52,479 +53,542 @@ interface FunctionalLocationViewProps {
   onClose?: () => void;
   validate?: FunctionalLocationValidate;
 }
-export default function FunctionalLocationFilter({
-  flid,
-  visible,
-  onClose,
-  onSelect,
-  validate,
-}: FunctionalLocationViewProps) {
+// export default function FunctionalLocationFilter({
+//   flid,
+//   visible,
+//   onClose,
+//   onSelect,
+//   validate,
+// }: FunctionalLocationViewProps) {
+const FunctionalLocationFilter = forwardRef<any, FunctionalLocationViewProps>(
+  function FunctionalLocationFilter({
+    flid,
+    visible,
+    onClose,
+    onSelect,
+    validate,
+  }, ref) {
 
-  const { colors } = useAppTheme();
+    const { colors } = useAppTheme();
 
-  const locationRef = useRef<any>(null);
-  const sbuRef = useRef<any>(null);
-  const pbuRef = useRef<any>(null);
-  const sectionRef = useRef<any>(null);
-  const cellRef = useRef<any>(null);
-  const machineRef = useRef<any>(null);
+    const locationRef = useRef<any>(null);
+    const sbuRef = useRef<any>(null);
+    const pbuRef = useRef<any>(null);
+    const sectionRef = useRef<any>(null);
+    const cellRef = useRef<any>(null);
+    const machineRef = useRef<any>(null);
 
-  const { currentRole } = useGrid(); 
-  
+    const { currentRole } = useGrid();
 
 
-const [form, setForm] = useState<FunctionalLocation>({
-    companyId: '',
-  locationId: '',
-  sbuId: '',
-  pbuId: '' ,
-  sectionId: '',
-  cellId: '',
-  machineId: '',
-  flid: flid,
-  });
 
-  const [disableFields, setDisableFields] = useState<FunctionalLocationDisable>();
+    const [form, setForm] = useState<FunctionalLocation>({
+      companyId: '',
+      locationId: '',
+      sbuId: '',
+      pbuId: '',
+      sectionId: '',
+      cellId: '',
+      machineId: '',
+      flid: flid,
+    });
 
-  const [resultSet, setResultSet] = useState<any>({});
+    const [disableFields, setDisableFields] = useState<FunctionalLocationDisable>();
 
-const loadFunctionalLocation = async (
-  originalId?: string,
-  flid?: string,
-  first? : boolean
-) => {
-  try {
-    const result = await get(
-      'dropdown/functional-location/hierarchy',
-      {
-        flid : flid,
-        originalId : originalId
-    }
-    );
-    setResultSet(result);
+    const [resultSet, setResultSet] = useState<any>({});
 
-    setForm(prev => ({
-      ...prev,
-      companyId: result.companyId ?? '',
-      locationId: result.locationId ?? '',
-      sbuId: result.sbuId ?? '',
-      pbuId: result.pbuId ?? '',
-      sectionId: result.sectionId ?? '',
-      cellId: result.cellId ?? '',
-      machineId: result.machineId ?? '',
-      flid: result.flid ?? '',
+    const loadFunctionalLocation = async (
+      originalId?: string,
+      flid?: string,
+      first?: boolean
+    ) => {
+      try {
+        const result = await get(
+          'dropdown/functional-location/hierarchy',
+          {
+            flid: flid,
+            originalId: originalId
+          }
+        );
+        setResultSet(result);
+
+        setForm(prev => ({
+          ...prev,
+          companyId: result.companyId ?? '',
+          locationId: result.locationId ?? '',
+          sbuId: result.sbuId ?? '',
+          pbuId: result.pbuId ?? '',
+          sectionId: result.sectionId ?? '',
+          cellId: result.cellId ?? '',
+          machineId: result.machineId ?? '',
+          flid: result.flid ?? '',
+        }));
+        if (first) {
+          if (result.machineId) {
+            machine_onSelect(result.machineId);
+          } else if (result.cellId) {
+            cell_onSelect(result.cellId);
+          } else if (result.sectionId) {
+            section_onSelect(result.sectionId);
+          } else if (result.pbuId) {
+            pbu_onSelect(result.pbuId);
+          } else if (result.sbuId) {
+            sbu_onSelect(result.sbuId);
+          }
+        }
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const loadFunctionalLocationDisable = async (
+      originalId?: string,
+      flid?: string
+    ) => {
+      try {
+        const result = await get(
+          'dropdown/functional-location/hierarchy',
+          {
+            flid: flid,
+            originalId: originalId
+          }
+        );
+
+
+        setDisableFields(prev => ({
+          ...prev,
+          isCompany: result.companyId ? true : false,
+          isLocation: result.locationId ? true : false,
+          isSbu: result.sbuId ? true : false,
+          isPbu: result.pbuId ? true : false,
+          isSection: result.sectionId ? true : false,
+          isCell: result.cellId ? true : false,
+          isMachine: result.machineId ? true : false,
+        }));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    useEffect(() => {
+      if (flid) {
+        loadFunctionalLocation(undefined, flid, true);
+      }
+      loadFunctionalLocationDisable(undefined, currentRole.flid);
+    }, [visible]);
+
+    const updateField = (
+      field: string,
+      value: any
+    ) => {
+      setForm(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    };
+
+    const functionalLocation_onSubmit = (silent = false): string => {
+      const validations = [
+        { required: validate?.isCompany, value: form.companyId, label: 'Company' },
+        { required: validate?.isLocation, value: form.locationId, label: 'Location' },
+        { required: validate?.isSbu, value: form.sbuId, label: 'SBU' },
+        { required: validate?.isPbu, value: form.pbuId, label: 'PBU' },
+        { required: validate?.isSection, value: form.sectionId, label: 'DMT' },
+        { required: validate?.isCell, value: form.cellId, label: 'JH' },
+        { required: validate?.isMachine, value: form.machineId, label: 'Equipment' },
+      ];
+
+      for (const item of validations) {
+        if ((item.required ?? false) && !item.value) {
+          if (!silent) {
+            Alert.alert('Validation', `Please select ${item.label}`);
+          }
+          return `Please select ${item.label}`;
+        }
+      }
+
+      onSelect?.(resultSet);
+      onClose?.();
+      return 'Functional location selected';
+    };
+
+    // lets the parent say "ok" by voice
+    useImperativeHandle(ref, () => ({
+      submit: () =>
+        visible ? functionalLocation_onSubmit(true) : 'Functional location is not open',
     }));
- if(first){
-  if(result.machineId){
-      machine_onSelect(result.machineId);
-    }else if(result.cellId){
-      cell_onSelect(result.cellId);
-    }else if(result.sectionId){
-      section_onSelect(result.sectionId);
-    }else if(result.pbuId){
-      pbu_onSelect(result.pbuId);
-    }else if(result.sbuId){
-      sbu_onSelect(result.sbuId);
-    }
- }
-    
-  } catch (error) {
-    console.log(error);
-  }
-};
 
-const loadFunctionalLocationDisable = async (
-  originalId?: string,
-  flid?: string
-) => {
-  try {
-    const result = await get(
-      'dropdown/functional-location/hierarchy',
-      {
-        flid : flid,
-        originalId : originalId
-    }
+    // ---------------- Voice control: active only while the panel is open ----------------
+    const levelDef = (
+      id: string,
+      label: string,
+      aliases: string[],
+      r: React.MutableRefObject<any>,
+      keywords: string[] = [],
+    ) => ({
+      id,
+      label,
+      aliases,
+      keywords,
+      kind: 'dropdown' as const,
+      open: () => r.current?.open?.(),
+      close: () => r.current?.close?.(),
+      getOptions: () => r.current?.getOptions?.() ?? [],
+      select: (v: string) => r.current?.select?.(v),
+    });
+
+    const voiceOn = !!visible;
+    useRegisterVoiceControl(
+      levelDef('fl-location', 'location', ['location'], locationRef, ['locations', 'loca']),
+      voiceOn && !disableFields?.isLocation,
     );
-    
+    useRegisterVoiceControl(
+      levelDef('fl-sbu', 'SBU', ['sbu', 's b u'], sbuRef, ['s b u', 'sb u', 'es bu', 'esbu']),
+      voiceOn && !disableFields?.isSbu,
+    );
+    useRegisterVoiceControl(
+      levelDef('fl-pbu', 'PBU', ['pbu', 'p b u'], pbuRef, ['p b u', 'pb u', 'pe bu']),
+      voiceOn && !disableFields?.isPbu,
+    );
+    useRegisterVoiceControl(
+      levelDef('fl-section', 'DMT', ['dmt', 'd m t', 'section'], sectionRef, ['dm t', 'd mt']),
+      voiceOn && !disableFields?.isSection,
+    );
+    useRegisterVoiceControl(
+      levelDef('fl-cell', 'JH', ['jh', 'j h', 'c e ll', 'j hhh', 'g h', 'j h , h h', 'gh',], cellRef, ['jay h', 'jay age', 'jha', 'je h', 'gh', 'g h', 'ge h']),
+      voiceOn && !disableFields?.isCell,
+    );
+    useRegisterVoiceControl(
+      levelDef('fl-machine', 'equipment', ['equipment', 'machine'], machineRef, ['equipments', 'equip', 'machines']),
+      voiceOn && !disableFields?.isMachine,
+    );
 
-    setDisableFields(prev => ({
-      ...prev,
-      isCompany: result.companyId ? true : false,
-      isLocation: result.locationId ? true : false,
-      isSbu: result.sbuId ? true : false,
-      isPbu: result.pbuId ? true : false,
-      isSection: result.sectionId ? true : false,
-      isCell: result.cellId ? true : false,
-      isMachine: result.machineId ? true : false,
-    }));
-  } catch (error) {
-    console.log(error);
-  }
-};
 
-useEffect(() => {
-  if (flid) {
-    loadFunctionalLocation(undefined, flid,true);
-  }
-  loadFunctionalLocationDisable(undefined,currentRole.flid);
-}, [visible]);
+    const location_onSelect = (
+      value: any
+    ) => {
+      if (value) {
+        loadFunctionalLocation(value, undefined);
+        sbuRef.current?.reload({
+          locationId: value,
+          companyId: form.companyId,
+        });
+        pbuRef.current?.reload({
+          locationId: value,
+          companyId: form.companyId,
+        });
+        sectionRef.current?.reload({
+          locationId: value,
+        });
+        cellRef.current?.reload({
+          locationId: value,
+        });
+        machineRef.current?.reload({
+          locationId: value,
+        });
 
-  const updateField = (
-    field: string,
-    value: any
-  ) => {
-    setForm({
-      ...form,
-      [field]: value
-    });
-  };
+      } else {
+        loadFunctionalLocation(form.companyId, undefined);
+        sbuRef.current?.reload({
+          companyId: form.companyId,
+        });
+        pbuRef.current?.reload({
+          companyId: form.companyId,
+        });
+        sectionRef.current?.reload({
+          companyId: form.companyId,
+        });
+        cellRef.current?.reload({
+          companyId: form.companyId,
+        });
+        machineRef.current?.reload({
+          companyId: form.companyId,
+        });
+      }
+    };
 
-  const functionalLocation_onSubmit =  () => {
-  const validations = [
-    { required: validate?.isCompany, value: form.companyId, label: 'Company' },
-    { required: validate?.isLocation, value: form.locationId, label: 'Location' },
-    { required: validate?.isSbu, value: form.sbuId, label: 'SBU' },
-    { required: validate?.isPbu, value: form.pbuId, label: 'PBU' },
-    { required: validate?.isSection, value: form.sectionId, label: 'DMT' },
-    { required: validate?.isCell, value: form.cellId, label: 'JH' },
-    { required: validate?.isMachine, value: form.machineId, label: 'Equipment' },
-  ];
+    const sbu_onSelect = (
+      value: any
+    ) => {
+      if (value) {
+        loadFunctionalLocation(value, undefined);
+        pbuRef.current?.reload({
+          sbuId: value,
+          companyId: form.companyId,
+        });
+        sectionRef.current?.reload({
+          sbuId: value,
+        });
+        cellRef.current?.reload({
+          sbuId: value,
+        });
+        machineRef.current?.reload({
+          sbuId: value,
+        });
+      } else {
+        loadFunctionalLocation(form.locationId, undefined);
+        pbuRef.current?.reload({
+          locationId: form.locationId,
+          companyId: form.companyId,
+        });
+        sectionRef.current?.reload({
+          locationId: form.locationId,
+        });
+        cellRef.current?.reload({
+          locationId: form.locationId,
+        });
+        machineRef.current?.reload({
+          locationId: form.locationId,
+        });
+      }
 
-  for (const item of validations) {
-    if ((item.required ?? false) && !item.value) {
-      Alert.alert('Validation', `Please select ${item.label}`);
-      return;
-    }
-  }
+    };
 
-  //onSelect?.(form.flid);
-  onSelect?.(resultSet);
-  onClose?.();
-                
-};
+    const pbu_onSelect = (
+      value: any
+    ) => {
+      if (value) {
+        loadFunctionalLocation(value, undefined);
+        sectionRef.current?.reload({
+          pbuId: value,
+        });
+        cellRef.current?.reload({
+          pbuId: value,
+        });
+        machineRef.current?.reload({
+          pbuId: value,
+        });
+      } else {
+        loadFunctionalLocation(form.sbuId, undefined);
+        sectionRef.current?.reload({
+          sbuId: form.sbuId,
+        });
+        cellRef.current?.reload({
+          sbuId: form.sbuId,
+        });
+        machineRef.current?.reload({
+          sbuId: form.sbuId,
+        });
+      }
 
- const location_onSelect = (
-    value: any
-  ) => {
-    if(value){
-loadFunctionalLocation(value, undefined);
-    sbuRef.current?.reload({
-        locationId: value,
-        companyId: form.companyId,
-    });
-    pbuRef.current?.reload({
-        locationId: value,
-        companyId: form.companyId,
-    });
-    sectionRef.current?.reload({
-        locationId: value,
-    });
-    cellRef.current?.reload({
-        locationId: value,
-    });
-    machineRef.current?.reload({
-        locationId: value,
-    });
-    
-    }else{
-      loadFunctionalLocation(form.companyId, undefined);
-       sbuRef.current?.reload({
-        companyId: form.companyId,
-    });
-    pbuRef.current?.reload({
-       companyId: form.companyId,
-    });
-    sectionRef.current?.reload({
-       companyId: form.companyId,
-    });
-    cellRef.current?.reload({
-        companyId: form.companyId,
-    });
-    machineRef.current?.reload({
-        companyId: form.companyId,
-    });
-  }
-  };
+    };
 
-  const sbu_onSelect = (
-    value: any
-  ) => {
-    if(value){
-loadFunctionalLocation(value, undefined);
-    pbuRef.current?.reload({
-        sbuId: value,
-        companyId: form.companyId,
-    });
-    sectionRef.current?.reload({
-        sbuId: value,
-    });
-    cellRef.current?.reload({
-        sbuId: value,
-    });
-    machineRef.current?.reload({
-        sbuId: value,
-    });
-    }else{
-      loadFunctionalLocation(form.locationId, undefined);
-    pbuRef.current?.reload({
-        locationId: form.locationId,
-        companyId: form.companyId,
-    });
-    sectionRef.current?.reload({
-        locationId: form.locationId,
-    });
-    cellRef.current?.reload({
-        locationId: form.locationId,
-    });
-    machineRef.current?.reload({
-        locationId: form.locationId,
-    });
-    }
-    
-  };
+    const section_onSelect = (
+      value: any
+    ) => {
+      if (value) {
+        loadFunctionalLocation(value, undefined);
+        cellRef.current?.reload({
+          sectionid: value,
+        });
+        machineRef.current?.reload({
+          sectionid: value,
+        });
+      } else {
+        loadFunctionalLocation(form.pbuId, undefined);
+        cellRef.current?.reload({
+          pbuId: form.pbuId,
+        });
+        machineRef.current?.reload({
+          pbuId: form.pbuId,
+        });
+      }
 
-  const pbu_onSelect = (
-    value: any
-  ) => {
-    if(value){
-    loadFunctionalLocation(value, undefined);
-    sectionRef.current?.reload({
-        pbuId: value,
-    });
-    cellRef.current?.reload({
-        pbuId: value,
-    });
-    machineRef.current?.reload({
-        pbuId: value,
-    });
-    }else{
-      loadFunctionalLocation(form.sbuId, undefined);
-    sectionRef.current?.reload({
-        sbuId: form.sbuId,
-    });
-    cellRef.current?.reload({
-        sbuId: form.sbuId,
-    });
-    machineRef.current?.reload({
-        sbuId: form.sbuId,
-    });
-    }
-    
-  };
+    };
 
-  const section_onSelect = (
-    value: any
-  ) => {
-    if(value){
-    loadFunctionalLocation(value, undefined);
-    cellRef.current?.reload({
-        sectionid: value,
-    });
-    machineRef.current?.reload({
-        sectionid: value,
-    });
-    }else{
-      loadFunctionalLocation(form.pbuId, undefined);
-    cellRef.current?.reload({
-        pbuId: form.pbuId,
-    });
-    machineRef.current?.reload({
-         pbuId: form.pbuId,
-    });
-    }
-    
-  };
+    const cell_onSelect = (
+      value: any
+    ) => {
+      if (value) {
+        loadFunctionalLocation(value, undefined);
+        machineRef.current?.reload({
+          cellId: value,
+        });
+      } else {
+        loadFunctionalLocation(form.sectionId, undefined);
+        machineRef.current?.reload({
+          sectionid: form.sectionId,
+        });
+      }
 
-  const cell_onSelect = (
-    value: any
-  ) => {
-    if(value){
- loadFunctionalLocation(value, undefined);
-    machineRef.current?.reload({
-        cellId: value,
-    });
-    }else{
-       loadFunctionalLocation(form.sectionId, undefined);
-    machineRef.current?.reload({
-        sectionid: form.sectionId,
-    });
-    }
-   
-  };
+    };
 
     const machine_onSelect = (
-    value: any
-  ) => {
-    if(value){
-loadFunctionalLocation(value, undefined);
-    }
-  };
+      value: any
+    ) => {
+      if (value) {
+        loadFunctionalLocation(value, undefined);
+      }
+    };
 
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-    >
-      
+    return (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+      >
 
-      <View style={styles.overlay}>
-        <View style={[
-    styles.container,
-    { backgroundColor: colors.background },
-  ]}>
-{/* <TouchableOpacity
+
+        <View style={styles.overlay}>
+          <View style={[
+            styles.container,
+            { backgroundColor: colors.background },
+          ]}>
+            {/* <TouchableOpacity
   style={styles.closeButton}
   onPress={onClose}
 >
   <Text style={styles.closeText}>✕</Text>
 </TouchableOpacity> */}
 
-<TouchableOpacity
-  style={styles.closeBtn}
-  onPress={onClose}
->
-  {/* <Text style={styles.closeText}>✕</Text> */}
-  <MaterialIcons name="close" size={24} color="white"/>
-</TouchableOpacity>
-          <Text style={[styles.title,{color:colors.text}]}>
-            Functional Location
-          </Text>
-
-<AppDropdown
-  label="Company"
-  manditory={validate?.isCompany ?? false}
-  disable={disableFields?.isCompany}
-  value={form.companyId}
-  endpoint="commonFilter/companyCombo"
-   onChange={(value:any) =>
-    updateField('companyId', value)
-   }
-/>
-
-<AppDropdown
-ref={locationRef}
-  label="Location"
-  manditory={validate?.isLocation ?? false}
-  disable={disableFields?.isLocation}
-  value={form.locationId}
-  endpoint="commonFilter/location"
-   onChange={(value:any) =>{
-    updateField('locationId', value);
-    location_onSelect(value);
-   }
-   }
-/>
-
-<AppDropdown
-  ref={sbuRef}
-  label="SBU"
-  manditory={validate?.isSbu ?? false}
-  disable={disableFields?.isSbu}
-  value={form.sbuId}
-  endpoint="commonFilter/sbuCombo"
-   onChange={(value:any) => { 
-    updateField('sbuId', value);
-    sbu_onSelect(value);
-   }
-    
-   }
-/>
-
-<AppDropdown
-  ref={pbuRef}
-  label="PBU"
-  manditory={validate?.isPbu ?? false}
-  disable={disableFields?.isPbu}
-  value={form.pbuId}
-  endpoint="commonFilter/pbuCombo"
-   onChange={(value:any) =>{
-    updateField('pbuId', value);
-    pbu_onSelect(value);
-   }
-    
-   }
-/>
-
-<AppDropdown
-ref={sectionRef}
-  label="DMT"
-  manditory={validate?.isSection ?? false}
-  disable={disableFields?.isSection}
-  value={form.sectionId}
-  endpoint="commonFilter/sectionCombo"
-   onChange={(value:any) => {
-    updateField('sectionId', value);
-    section_onSelect(value);
-   }
-    
-   }
-/>
-
-<AppDropdown
-ref={cellRef}
-  label="JH"
-  manditory={validate?.isCell ?? false}
-  disable={disableFields?.isCell}
-  value={form.cellId}
-  endpoint="commonFilter/cellCombo"
-   onChange={(value:any) => {
-    updateField('cellId', value);
-    cell_onSelect(value);
-   }
-    
-   }
-/>
-
- 
-<AppDropdown
-ref={machineRef}
-  label="Equipment"
-  manditory={validate?.isMachine ?? false}
-  disable={disableFields?.isMachine}
-  value={form.machineId}
-  endpoint="commonFilter/machineCombo"
-   onChange={(value:any) => {
-    updateField('machineId', value);
-    machine_onSelect(value);
-   }
-    
-   }
-/>
-
-          <View style={styles.buttonRow}>
-
             <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-              functionalLocation_onSubmit();  
-              }}
+              style={styles.closeBtn}
+              onPress={onClose}
             >
-              <Text>OK</Text>
+              {/* <Text style={styles.closeText}>✕</Text> */}
+              <MaterialIcons name="close" size={24} color="white" />
             </TouchableOpacity>
+            <Text style={[styles.title, { color: colors.text }]}>
+              Functional Location
+            </Text>
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-               loadFunctionalLocation(undefined,currentRole.flid);
-              }}
-            >
-              <Text>Clear</Text>
-            </TouchableOpacity>
-             {/* <TouchableOpacity
+            <AppDropdown
+              label="Company"
+              manditory={validate?.isCompany ?? false}
+              disable={disableFields?.isCompany}
+              value={form.companyId}
+              endpoint="commonFilter/companyCombo"
+              onChange={(value: any) =>
+                updateField('companyId', value)
+              }
+            />
+
+            <AppDropdown
+              ref={locationRef}
+              label="Location"
+              manditory={validate?.isLocation ?? false}
+              disable={disableFields?.isLocation}
+              value={form.locationId}
+              endpoint="commonFilter/location"
+              onChange={(value: any) => {
+                updateField('locationId', value);
+                location_onSelect(value);
+              }
+              }
+            />
+
+            <AppDropdown
+              ref={sbuRef}
+              label="SBU"
+              manditory={validate?.isSbu ?? false}
+              disable={disableFields?.isSbu}
+              value={form.sbuId}
+              endpoint="commonFilter/sbuCombo"
+              onChange={(value: any) => {
+                updateField('sbuId', value);
+                sbu_onSelect(value);
+              }
+
+              }
+            />
+
+            <AppDropdown
+              ref={pbuRef}
+              label="PBU"
+              manditory={validate?.isPbu ?? false}
+              disable={disableFields?.isPbu}
+              value={form.pbuId}
+              endpoint="commonFilter/pbuCombo"
+              onChange={(value: any) => {
+                updateField('pbuId', value);
+                pbu_onSelect(value);
+              }
+
+              }
+            />
+
+            <AppDropdown
+              ref={sectionRef}
+              label="DMT"
+              manditory={validate?.isSection ?? false}
+              disable={disableFields?.isSection}
+              value={form.sectionId}
+              endpoint="commonFilter/sectionCombo"
+              onChange={(value: any) => {
+                updateField('sectionId', value);
+                section_onSelect(value);
+              }
+
+              }
+            />
+
+            <AppDropdown
+              ref={cellRef}
+              label="JH"
+              manditory={validate?.isCell ?? false}
+              disable={disableFields?.isCell}
+              value={form.cellId}
+              endpoint="commonFilter/cellCombo"
+              onChange={(value: any) => {
+                updateField('cellId', value);
+                cell_onSelect(value);
+              }
+
+              }
+            />
+
+
+            <AppDropdown
+              ref={machineRef}
+              label="Equipment"
+              manditory={validate?.isMachine ?? false}
+              disable={disableFields?.isMachine}
+              value={form.machineId}
+              endpoint="commonFilter/machineCombo"
+              onChange={(value: any) => {
+                updateField('machineId', value);
+                machine_onSelect(value);
+              }
+
+              }
+            />
+
+            <View style={styles.buttonRow}>
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  functionalLocation_onSubmit();
+                }}
+              >
+                <Text>OK</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  loadFunctionalLocation(undefined, currentRole.flid);
+                }}
+              >
+                <Text>Clear</Text>
+              </TouchableOpacity>
+              {/* <TouchableOpacity
               style={styles.button}
               onPress={onClose}
             >
               <Text>Close</Text>
             </TouchableOpacity> */}
 
-          </View>
+            </View>
 
+          </View>
         </View>
-      </View>
-    </Modal>
-  );
-}
+      </Modal>
+    );
+  });
+
+export default FunctionalLocationFilter;
 
 // const styles = StyleSheet.create({
 //   overlay: {
@@ -556,7 +620,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
-    closeBtn: {
+  closeBtn: {
     position: 'absolute',
     top: 10,
     right: 10,
@@ -651,16 +715,16 @@ const styles = StyleSheet.create({
   // },
 
   closeButton: {
-  position: 'absolute',
-  top: 10,
-  right: 10,
-  zIndex: 100,
-  padding: 5,
-},
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 100,
+    padding: 5,
+  },
 
-closeText: {
-  fontSize: 26,
-  fontWeight: 'bold',
-  color: 'red',
-},
+  closeText: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: 'red',
+  },
 });

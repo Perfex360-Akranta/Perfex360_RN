@@ -44,6 +44,7 @@ export type VoiceControlDef = {
     close?: () => void | string; // a panel can return a sentence to speak
     cancel?: () => void;
     confirm?: () => void | string; // "ok" applies the panel's selection
+    isOpen?: () => boolean;
     getOptions?: () => Option[];
     select?: (value: string) => void;
     // text
@@ -243,21 +244,21 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                     await Voice.cancel();
                 } catch { }
             }
-                await Voice.start('en-IN');
+            await Voice.start('en-IN');
 
-                clearWatchdog();
-                watchdogRef.current = setTimeout(() => {
-                    if (sessionRef.current && !busyRef.current && !speakingRef.current) {
-                        scheduleRestart(100);
-                    }
-                }, WATCHDOG_MS);
-            } catch (error) {
-                console.warn('[VoiceControl] start failed:', error);
-                scheduleRestart(1500);
-            } finally {
-                startingRef.current = false;
-            }
-        }, [scheduleRestart]);
+            clearWatchdog();
+            watchdogRef.current = setTimeout(() => {
+                if (sessionRef.current && !busyRef.current && !speakingRef.current) {
+                    scheduleRestart(100);
+                }
+            }, WATCHDOG_MS);
+        } catch (error) {
+            console.warn('[VoiceControl] start failed:', error);
+            scheduleRestart(1500);
+        } finally {
+            startingRef.current = false;
+        }
+    }, [scheduleRestart]);
     startRef.current = startRecognizer;
 
     // Pause the mic while the app is talking, resume afterwards
@@ -348,10 +349,16 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
     const getCtl = (id: string | null): VoiceControlDef | null =>
         (id && controlsRef.current.get(id)?.current) || null;
 
-    const findPanel = (): VoiceControlDef | null =>
-        Array.from(controlsRef.current.values())
+    // const findPanel = (): VoiceControlDef | null =>
+    //     Array.from(controlsRef.current.values())
+    //         .map(r => r.current)
+    //         .find(c => c.kind === 'panel') ?? null;
+    const findPanel = (): VoiceControlDef | null => {
+        const panels = Array.from(controlsRef.current.values())
             .map(r => r.current)
-            .find(c => c.kind === 'panel') ?? null;
+            .filter(c => c.kind === 'panel');
+        return panels.find(c => c.isOpen?.()) ?? panels[0] ?? null;
+    };
 
     const resolveControl = (target: string, minScore = 0.75): VoiceControlDef | null => {
         const t = normalize(target).replace(/^(the|my) /, '');
