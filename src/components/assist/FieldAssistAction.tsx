@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { ActiveField, useFieldAssist } from '../../context/FieldAssistContext';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 
 // type Props = {
 //   field: ActiveField;
@@ -26,6 +27,8 @@ export default function FieldAssistAction({ field,
   style,
   visible,
   onDismiss, }: Props) {
+  const { isFeatureEnabled } = useFeatureToggles();
+  const fieldAssistEnabled = isFeatureEnabled('fieldAssist');
   const {
     activeField,
     listening,
@@ -121,6 +124,10 @@ export default function FieldAssistAction({ field,
   const handleUpload = () => {
     captureImageForField(field, 'library');
   };
+
+  if (!fieldAssistEnabled) {
+    return null;
+  }
 
   return (
     <View style={[styles.container, style]}>

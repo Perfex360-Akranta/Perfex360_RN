@@ -644,6 +644,7 @@ import React, {
   useState,
 } from 'react';
 import { speak, stopSpeaking } from '../services/assist/voiceGuide';
+import { useFeatureToggles } from './FeatureToggleContext';
 
 export type GuidedField = {
   id: string;
@@ -681,6 +682,8 @@ const ANNOUNCE_DEBOUNCE = 300; // wait for fields to register before speaking
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 export function VoiceGuideProvider({ children }: { children: React.ReactNode }) {
+  const { isFeatureEnabled } = useFeatureToggles();
+  const voiceGuidanceEnabled = isFeatureEnabled('voiceGuidance');
   const [isActive, setIsActive] = useState(false);
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
   const [fields, setFields] = useState<GuidedField[]>([]);
@@ -724,7 +727,7 @@ export function VoiceGuideProvider({ children }: { children: React.ReactNode }) 
 
   // Speak the prompt for the current field (stable: reads refs only)
   const provideGuidance = useCallback(async () => {
-    if (!guidanceActiveRef.current) {
+    if (!voiceGuidanceEnabled || !guidanceActiveRef.current) {
       return;
     }
 
@@ -799,13 +802,16 @@ export function VoiceGuideProvider({ children }: { children: React.ReactNode }) 
 
   // Start voice guidance for a screen
   const startGuidance = useCallback((screen: string) => {
+    if (!voiceGuidanceEnabled) {
+      return;
+    }
     setScreenName(screen);
     currentScreenRef.current = screen;
     guidanceActiveRef.current = true;
     indexRef.current = 0;
     setCurrentFieldIndex(0);
     setIsActive(true);
-  }, []);
+  }, [voiceGuidanceEnabled]);
 
   // Stop voice guidance
   const stopGuidance = useCallback(() => {
@@ -816,29 +822,45 @@ export function VoiceGuideProvider({ children }: { children: React.ReactNode }) 
     stopSpeaking();
   }, []);
 
+  // Stop active guidance immediately if voice guidance is toggled OFF
+  useEffect(() => {
+    if (!voiceGuidanceEnabled && (isActive || guidanceActiveRef.current)) {
+      stopGuidance();
+    }
+  }, [voiceGuidanceEnabled, isActive, stopGuidance]);
+
   // Announce success
   const announceSuccess = useCallback(async (entityName: string) => {
+    if (!voiceGuidanceEnabled) {
+      return;
+    }
     await stopSpeaking();
     await speak(`${entityName} completed successfully`);
-  }, []);
+  }, [voiceGuidanceEnabled]);
 
   // Announce failure
   const announceFailure = useCallback(async (errorMessage: string) => {
+    if (!voiceGuidanceEnabled) {
+      return;
+    }
     await stopSpeaking();
     await speak(`Save failed. ${errorMessage}`);
-  }, []);
+  }, [voiceGuidanceEnabled]);
 
   // Announce save button
   const announceSaveButton = useCallback(async () => {
+    if (!voiceGuidanceEnabled) {
+      return;
+    }
     await stopSpeaking();
     await speak('Tap the save button to save your records');
-  }, []);
+  }, [voiceGuidanceEnabled]);
 
   // Speak the current field whenever it changes. Each field is announced once.
   // Non-mandatory fields advance automatically after the speech ends plus a
   // short delay; mandatory fields advance when filled (see polling effect).
   useEffect(() => {
-    if (!isActive) {
+    if (!isActive || !voiceGuidanceEnabled) {
       return;
     }
 
@@ -874,7 +896,7 @@ export function VoiceGuideProvider({ children }: { children: React.ReactNode }) 
 
   // Mandatory field: getValue() isn't reactive, so poll until it is filled
   useEffect(() => {
-    if (!isActive) {
+    if (!isActive || !voiceGuidanceEnabled) {
       return;
     }
 

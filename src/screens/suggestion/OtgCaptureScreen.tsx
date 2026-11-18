@@ -8,11 +8,9 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import MaterialIcons from '@react-native-vector-icons/material-icons';
 import DatePicker from '../../components/forms/DatePicker';
 import AppDropdown from '../../components/forms/AppDropdown';
 import CheckBox from '@react-native-community/checkbox';
-import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
 import SuggestionImageUpload, {
   PickedImage,
 } from '../../components/forms/SuggestionImageUpload';
@@ -72,9 +70,10 @@ const PRIORITIES = [
   { label: 'Critical', value: 'C' },
 ];
 
-const FOCUS_GUIDE_ENABLED = true;
-const FOCUS_AUTO_ACTIVATE = true;
+const FOCUS_GUIDE_ENABLED = true; // false = no highlight at all
+const FOCUS_AUTO_ACTIVATE = true; // false = highlight only, you say "enter ..." yourself
 const AUTO_STEPS = ['title', 'description', 'imageUpload', 'type', 'employee'];
+
 export default function OTGCaptureFormScreen({
   navigation,
   route,
@@ -103,7 +102,7 @@ export default function OTGCaptureFormScreen({
 
   const functionalLocationRef = useRef<FunctionalLocationScannerViewHandle>(null);
   const employeeRef = useRef<any>(null);
-  const selectedJhRef = useRef('');
+  const selectedJhRef = useRef(''); // the JH already accepted, '' when none
   const imageUploadRef = useRef<any>(null);
   const resumeAfterPickerRef = useRef(false);
   const resumeAfterScannerRef = useRef(false);
@@ -165,6 +164,7 @@ export default function OTGCaptureFormScreen({
       unsubFocus();
       stopListening(true);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation]);
 
   const updateField = (
@@ -177,23 +177,12 @@ export default function OTGCaptureFormScreen({
     }));
   };
 
-  const openScanner = () => {
-    functionalLocationRef.current?.openQrScanner();
-  };
-
-  // const functionalLocationSuccess = (result: any) => {
-  //   setForm(previous => ({
-  //     ...previous,
-  //     flid: result?.flid ?? '',
-  //   }));
-
-  //   setSelectedFlidName(result?.flid ?? '');
-  //   setSelectedCellId(result?.cellId ?? '');
-  //   setIsFlSelected(true);
-  // };
+  // Only a JH counts as "selected".
+  // - The role's default (company level) location arrives when the view opens: ignored.
+  // - The same JH reported twice: ignored.
+  // - Any other result without a JH (for example a section QR): rejected out loud.
   const functionalLocationSuccess = (result: any) => {
     if (!result?.cellId) {
-
       if (result?.flid && result.flid !== currentRole?.flid && !editRecord) {
         speak('That is not a JH. Please scan a JH QR code');
         Alert.alert('JH required', 'Please scan a JH QR code or select a JH in the functional location.');
@@ -226,8 +215,9 @@ export default function OTGCaptureFormScreen({
       return false;
     };
 
-    if (!form.flid) {
-      return fail('Please scan or select the function location.');
+    // JH is mandatory: form.flid always has the role's default, so check the real selection
+    if (!isFlSelected) {
+      return fail('JH is required. Please scan the JH QR code or select it in functional location.');
     }
 
     if (!form.title.trim()) {
@@ -251,7 +241,7 @@ export default function OTGCaptureFormScreen({
       title: '',
       description: '',
       remarks: '',
-      flid: form.flid,
+      flid: currentRole?.flid ?? '',
       empmKeyid: currentUser?.employeeId ?? '',
       entrydate: new Date(),
       priority: 'M',
@@ -277,6 +267,8 @@ export default function OTGCaptureFormScreen({
     setSelectedEmployeeName('');
     setSelectedCellId('');
     setIsFlSelected(false);
+    selectedJhRef.current = '';
+    focus.reset(); // clears skipped steps so the next entry starts at the scanner
     setCaptureImage(null);
     setExistingImageUri(null);
     setIsOtherEmployee(false);
@@ -365,12 +357,6 @@ export default function OTGCaptureFormScreen({
         keyid: existing.keyid ?? '',
         flid: existing.flid ?? '',
         entrydate: existing.entrydate ? new Date(existing.entrydate) : new Date(),
-        // title: existing.title,
-        // description: existing.description,
-        // empmKeyid: existing.empmKeyid,
-        // remarks: existing.remarks,
-        // type: existing.type,
-        // priority: existing.priority,
         title: existing.title ?? '',
         description: existing.description ?? '',
         empmKeyid: existing.empmKeyid ?? '',
@@ -570,16 +556,17 @@ export default function OTGCaptureFormScreen({
     select: (v: string) => ref.current?.select?.(v),
   });
 
+  // Silent panels: opening, closing and cancelling give no spoken message
   useRegisterVoiceControl({
     id: 'functionalLocation',
     label: 'functional location',
     aliases: ['functional location', 'location', 'function location', 'functional location panel', 'location panel', 'hierarchy', 'filter'],
     keywords: ['function', 'functional', 'funtion', 'loca', 'location', 'hierarchy', 'panel', 'filter'],
     kind: 'panel',
+    silent: true,
     open: () => functionalLocationRef.current?.openFunctionalLocation(),
     close: () => {
       functionalLocationRef.current?.closeFunctionalLocation();
-      return 'Functional location closed';
     },
     cancel: () => functionalLocationRef.current?.closeFunctionalLocation(),
     confirm: () => functionalLocationRef.current?.submitFunctionalLocation?.(),
@@ -589,13 +576,13 @@ export default function OTGCaptureFormScreen({
   useRegisterVoiceControl({
     id: 'qrScanner',
     label: 'QR scanner',
-    aliases: ['qr scanner', 'scanner', 'scan qr', 'scan', 'qr code', 'qr', 'open qr scanner', 'barcode scanner'],
+    aliases: ['qr scanner', 'scanner', 'scan qr', 'scan', 'qr code', 'qr', 'qr code scanner', 'open qr scanner', 'barcode scanner'],
     keywords: ['q r', 'cure', 'queue are', 'skanner', 'scanning', 'barcode'],
     kind: 'panel',
+    silent: true,
     open: () => functionalLocationRef.current?.openQrScanner(),
     close: () => {
       functionalLocationRef.current?.closeQrScanner();
-      return 'Scanner closed';
     },
     cancel: () => functionalLocationRef.current?.closeQrScanner(),
     confirm: () => 'Point the camera at the QR code',
@@ -822,13 +809,15 @@ export default function OTGCaptureFormScreen({
         <FocusHighlight {...fh('title')}>
           <Label required>Observation</Label>
           <AssistTextInput
+            multiline
+            numberOfLines={5}
             value={form.title}
             onChangeText={(value: string) =>
               updateField('title', value)
             }
             placeholder="Enter Observation"
             style={[
-              styles.input,
+              styles.textArea,
               {
                 backgroundColor: colors.surface,
                 borderColor: colors.border,

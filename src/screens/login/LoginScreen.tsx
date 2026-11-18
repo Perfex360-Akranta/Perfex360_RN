@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,12 +20,24 @@ import ServerConfigModal from '../../components/model/ServerConfigModel';
 import { useGrid } from '../../context/GridProvider';
 import { useFieldAssist } from '../../context/FieldAssistContext';
 import { useAppTheme } from '../../theme/ThemeContext';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
+import {
+  BIOMETRIC_FEATURE_ENABLED,
+  clearBiometricData,
+  isBiometricLoginAvailable,
+  isInvalidCredentialsError,
+  readBiometricCredentials,
+  setActiveBiometricUsername,
+} from '../../services/auth/biometricService';
 
 const LoginScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 const [showServerModal, setShowServerModal] = useState(false);
+  const [showBiometricButton, setShowBiometricButton] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const loginInFlightRef = useRef(false);
 const { colors, themeMode, setThemeMode } = useAppTheme();
 const { setCurrentUser, setCurrentRole} = useGrid();
 const { closeAssist } = useFieldAssist();
@@ -34,31 +46,118 @@ useEffect(() => {
   closeAssist();
 }, [closeAssist]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkBiometricAvailability = async () => {
+      if (!BIOMETRIC_FEATURE_ENABLED) {
+        if (isMounted) {
+          setShowBiometricButton(false);
+        }
+        return;
+      }
+
+      const available = await isBiometricLoginAvailable();
+      if (isMounted) {
+        setShowBiometricButton(available);
+      }
+    };
+
+    checkBiometricAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const performLogin = async (loginUsername: string, loginPassword: string) => {
+    const result = await login({
+      username: loginUsername,
+      password: loginPassword,
+    });
+
+    setActiveBiometricUsername(loginUsername);
+    await saveToken(result.token);
+    await saveUser(result.user);
+    await loadUserDetails(result.user);
+    navigation.replace('Home');
+  };
+
   const onLogin = async () => {
+    if (loginInFlightRef.current || loading || biometricLoading) {
+      return;
+    }
+
     if (!username || !password) {
       Alert.alert('Please enter Username and Password');
       return;
     }
 
+    loginInFlightRef.current = true;
+    setLoading(true);
     try {
-      setLoading(true);
-
-      const result = await login({
-        username,
-        password,
-      });
-
-      await saveToken(result.token);
-      await saveUser(result.user);
-      await loadUserDetails(result.user);
-      navigation.replace('Home');
+      await performLogin(username, password);
     } catch (e: any) {
       Alert.alert(
         'Login Failed',
         e.response?.data?.message || 'Invalid Username or Password',
       );
     } finally {
+      loginInFlightRef.current = false;
       setLoading(false);
+    }
+  };
+
+  const onBiometricLogin = async () => {
+    if (loginInFlightRef.current || loading || biometricLoading) {
+      return;
+    }
+
+    loginInFlightRef.current = true;
+    setBiometricLoading(true);
+    try {
+      const readResult = await readBiometricCredentials();
+
+      if (readResult.status === 'unavailable') {
+        setShowBiometricButton(false);
+        Alert.alert(
+          'Biometrics Unavailable',
+          'Device biometrics are unavailable. Please log in manually.',
+        );
+        return;
+      }
+
+      if (readResult.status !== 'ok') {
+        if (readResult.status === 'error') {
+          Alert.alert(
+            'Biometric Login',
+            readResult.message ||
+              'Biometric authentication failed. Please log in manually.',
+          );
+        }
+        return;
+      }
+
+      try {
+        await performLogin(readResult.username, readResult.password);
+      } catch (e: any) {
+        if (isInvalidCredentialsError(e)) {
+          await clearBiometricData();
+          setShowBiometricButton(false);
+          Alert.alert(
+            'Login Failed',
+            'Stored credentials are invalid. Please log in manually and re-enable biometric login.',
+          );
+        } else {
+          Alert.alert(
+            'Login Failed',
+            e?.response?.data?.message || e?.message || 'Network Error',
+          );
+        }
+      }
+    } finally {
+      loginInFlightRef.current = false;
+      setBiometricLoading(false);
     }
   };
 
@@ -166,7 +265,8 @@ useEffect(() => {
 
             <TouchableOpacity
               style={styles.loginButton}
-              onPress={onLogin}>
+              onPress={onLogin}
+              disabled={loading || biometricLoading}>
 
               {loading ? (
                 <ActivityIndicator color="#fff"/>
@@ -175,6 +275,30 @@ useEffect(() => {
               )}
 
             </TouchableOpacity>
+
+            {BIOMETRIC_FEATURE_ENABLED && showBiometricButton ? (
+              <TouchableOpacity
+                style={[styles.biometricButton, { borderColor: colors.primary }]}
+                onPress={onBiometricLogin}
+                disabled={loading || biometricLoading}
+                testID="biometric-login-button">
+                {biometricLoading ? (
+                  <ActivityIndicator color={colors.primary} />
+                ) : (
+                  <View style={styles.biometricContent}>
+                    <MaterialIcons
+                      name="fingerprint"
+                      size={20}
+                      color={colors.primary}
+                    />
+                    <Text
+                      style={[styles.biometricText, { color: colors.primary }]}>
+                      Login with Fingerprint / Face ID
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ) : null}
 
             <TouchableOpacity>
               <Text style={styles.forgot}>
@@ -283,6 +407,26 @@ const styles = StyleSheet.create({
     color:'#fff',
     fontWeight:'700',
     fontSize:17
+  },
+
+  biometricButton:{
+    height:48,
+    borderRadius:12,
+    borderWidth:1,
+    justifyContent:'center',
+    alignItems:'center',
+    marginTop:12
+  },
+
+  biometricContent:{
+    flexDirection:'row',
+    alignItems:'center',
+    gap:8
+  },
+
+  biometricText:{
+    fontWeight:'600',
+    fontSize:15
   },
 
   forgot:{

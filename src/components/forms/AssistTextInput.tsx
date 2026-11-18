@@ -1,5 +1,6 @@
 import React, {
   forwardRef,
+  useContext,
   useEffect,
   useId,
   useMemo,
@@ -15,7 +16,9 @@ import {
 } from 'react-native';
 import { ActiveField, useFieldAssist } from '../../context/FieldAssistContext';
 import FieldAssistAction from '../assist/FieldAssistAction';
+import { NavigationContext } from '@react-navigation/native';
 import { useAppTheme } from '../../theme/ThemeContext';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 
 const LAYOUT_KEYS = [
   'margin',
@@ -53,17 +56,29 @@ function splitStyles(style: any) {
 const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
 
   const { colors } = useAppTheme();
+  const { isFeatureEnabled } = useFeatureToggles();
 
   const [isFocused, setIsFocused] = useState(false);
   const [showAssistActions, setShowAssistActions] = useState(false);
   const [isPressingAssistAction, setIsPressingAssistAction] =useState(false);
-  const { registerField, unregisterField } = useFieldAssist();
+  const { registerField, unregisterField, activeField, busy, successFieldId } =
+    useFieldAssist();
   const id = useId();
+  // Keep the action visible (as spinner / green tick) while this field is
+  // processing a scan, even though the camera blurred the input.
+  const isProcessing = activeField?.id === id && busy !== null;
+  const isDone = successFieldId === id;
+  const showStatus = isProcessing || isDone;
   const valueRef = useRef(props.value);
   const onChangeRef = useRef(props.onChangeText);
 
   valueRef.current = props.value;
   onChangeRef.current = props.onChangeText;
+  // Full-form scan: only include fields on the currently focused screen.
+  const navigation = useContext(NavigationContext);
+  const navRef = useRef(navigation);
+  navRef.current = navigation;
+  const isSecure = !!props.secureTextEntry;
 
   const canAssist =
     props.editable !== false &&
@@ -79,8 +94,10 @@ const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
       multiline: !!props.multiline,
       maxLength: props.maxLength,
       type: 'text',
+      isInScope: () => navRef.current?.isFocused?.() ?? true,
+      excludeFromFormScan: isSecure,
     }),
-    [id, props.placeholder, props.multiline, props.maxLength],
+    [id, props.placeholder, props.multiline, props.maxLength, isSecure],
   );
 
   useEffect(() => {
@@ -123,7 +140,7 @@ const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
           isMultiline ? styles.multilinePadding : styles.singlelinePadding,
         ]}
       />
-      {showAssistActions && isFocused && (
+      {isFeatureEnabled('fieldAssist') && ((showAssistActions && isFocused) || showStatus) && (
       <Pressable
     style={styles.actionSlot}
     onPressIn={() => setIsPressingAssistAction(true)}
@@ -135,7 +152,7 @@ const AssistTextInput = forwardRef<TextInput, TextInputProps>((props, ref) => {
     }}
   > 
         <FieldAssistAction field={field}
-      visible={true}
+      visible={!showStatus}
       onDismiss={() => {
       setShowAssistActions(false);
       setIsPressingAssistAction(false);

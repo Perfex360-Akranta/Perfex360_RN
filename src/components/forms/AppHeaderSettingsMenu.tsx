@@ -10,11 +10,13 @@ import {
 } from 'react-native';
 
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import { useNavigation } from '@react-navigation/native';
 import LogoutButton from './LogoutButton';
 import { useAppTheme } from '../../theme/ThemeContext';
 import { ThemeMode } from '../../theme/themeConfig';
 
 export default function AppHeaderSettingsMenu() {
+  const navigation = useNavigation<any>();
   const [visible, setVisible] = useState(false);
   const [showThemes, setShowThemes] = useState(false);
 
@@ -74,6 +76,40 @@ export default function AppHeaderSettingsMenu() {
                 >
                   OPTIONS
                 </Text>
+
+                <TouchableOpacity
+                  style={styles.item}
+                  onPress={() => {
+                    closeMenu();
+                    navigation.navigate('Settings');
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Settings"
+                >
+                  <MaterialIcons
+                    name="settings"
+                    size={22}
+                    color={colors.primary}
+                  />
+                  <View style={styles.itemText}>
+                    <Text style={[styles.label, { color: colors.text }]}>
+                      Settings
+                    </Text>
+                    <Text
+                      style={[
+                        styles.subtitle,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      Feature preferences
+                    </Text>
+                  </View>
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={22}
+                    color={colors.textSecondary}
+                  />
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.item}

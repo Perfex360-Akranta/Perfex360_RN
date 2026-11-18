@@ -26,6 +26,10 @@ export type ActiveField = {
   type?: 'text' | 'dropdown';
   getOptions?: () => DropdownOption[];
   onSelectOption?: (value: any, label?: string) => void;
+  /** Full-form scan: return false when the field's screen is not focused. */
+  isInScope?: () => boolean;
+  /** Full-form scan: never include this field (e.g. passwords). */
+  excludeFromFormScan?: boolean;
 };
 
 export type FieldAssistContextValue = {
@@ -52,6 +56,11 @@ export type FieldAssistContextValue = {
   toggleFieldMenu: (fieldId: string) => void;
   startListeningForField: (field: ActiveField) => Promise<void>;
   captureImageForField: (field: ActiveField, source: ImageSource) => Promise<void>;
+  /** Full-form scan registry (additive; does not change the active field). */
+  formFieldVersion: number;
+  trackFormField: (field: ActiveField) => void;
+  untrackFormField: (id: string) => void;
+  getFormFields: (sinceMs?: number) => ActiveField[];
 };
 
 const FieldAssistContext = createContext<FieldAssistContextValue | null>(null);
@@ -165,6 +174,42 @@ export function FieldAssistProvider({ children }: { children: React.ReactNode })
   const [openMenuFieldId, setOpenMenuFieldId] = useState<string | null>(null);
   const [successFieldId, setSuccessFieldId] = useState<string | null>(null);
 
+  // ---- Full-form scan registry (additive, separate from the active field) ----
+  const formFieldsRef = useRef(new Map<string, ActiveField>());
+  const formSeenAtRef = useRef(new Map<string, number>());
+  const [formFieldVersion, setFormFieldVersion] = useState(0);
+
+  const trackFormField = useCallback((field: ActiveField) => {
+    formFieldsRef.current.set(field.id, field);
+    if (!formSeenAtRef.current.has(field.id)) {
+      formSeenAtRef.current.set(field.id, Date.now());
+    }
+    setFormFieldVersion(v => v + 1);
+  }, []);
+
+  const untrackFormField = useCallback((id: string) => {
+    const had = formFieldsRef.current.delete(id);
+    formSeenAtRef.current.delete(id);
+    if (had) {
+      setFormFieldVersion(v => v + 1);
+    }
+  }, []);
+
+  const getFormFields = useCallback((sinceMs?: number) => {
+    const out: ActiveField[] = [];
+    formFieldsRef.current.forEach(f => {
+      if (f.excludeFromFormScan) return;
+      if (sinceMs != null && (formSeenAtRef.current.get(f.id) ?? 0) < sinceMs) return;
+      try {
+        if (f.isInScope && !f.isInScope()) return;
+      } catch {
+        // If scope can't be determined, include the field.
+      }
+      out.push(f);
+    });
+    return out;
+  }, []);
+
   const markSuccess = useCallback((fieldId: string) => {
     if (successTimerRef.current) {
       clearTimeout(successTimerRef.current);
@@ -192,9 +237,11 @@ export function FieldAssistProvider({ children }: { children: React.ReactNode })
     setActiveField(field);
     setHasField(true);
     setPreview('');
-  }, []);
+    trackFormField(field);
+  }, [trackFormField]);
 
   const unregisterField = useCallback((id: string) => {
+    untrackFormField(id);
     if (activeRef.current?.id === id) {
       activeRef.current = null;
       setActiveField(null);
@@ -380,7 +427,19 @@ export function FieldAssistProvider({ children }: { children: React.ReactNode })
           setBusy(null);
           return;
         }
-        const recognized = await readTextFromImage(uri);
+        const hintOptions =
+          field.type === 'dropdown' && field.getOptions
+            ? field
+                .getOptions()
+                .map(o => String(o.label ?? o.value ?? ''))
+                .filter(Boolean)
+            : undefined;
+        const recognized = await readTextFromImage(uri, {
+          label: field.label,
+          multiline: field.multiline,
+          maxLength: field.maxLength,
+          options: hintOptions,
+        });
         if (!recognized) {
           Alert.alert(
             'No text found',
@@ -472,6 +531,10 @@ export function FieldAssistProvider({ children }: { children: React.ReactNode })
       toggleFieldMenu,
       startListeningForField,
       captureImageForField,
+      formFieldVersion,
+      trackFormField,
+      untrackFormField,
+      getFormFields,
     }),
     [
       activeField,
@@ -497,6 +560,10 @@ export function FieldAssistProvider({ children }: { children: React.ReactNode })
       toggleFieldMenu,
       startListeningForField,
       captureImageForField,
+      formFieldVersion,
+      trackFormField,
+      untrackFormField,
+      getFormFields,
     ],
   );
 
@@ -505,10 +572,38 @@ export function FieldAssistProvider({ children }: { children: React.ReactNode })
   );
 }
 
-export function useFieldAssist() {
+export function useFieldAssist(): FieldAssistContextValue {
   const context = useContext(FieldAssistContext);
   if (!context) {
-    throw new Error('useFieldAssist must be used within FieldAssistProvider');
+    return {
+      activeField: null,
+      hasField: false,
+      isOpen: false,
+      listening: false,
+      preview: '',
+      busy: null,
+      hostedCount: 0,
+      openMenuFieldId: null,
+      successFieldId: null,
+      retainHost: () => {},
+      releaseHost: () => {},
+      registerField: () => {},
+      unregisterField: () => {},
+      openAssist: () => {},
+      closeAssist: () => {},
+      toggleListening: () => {},
+      stopListening: async () => {},
+      captureImage: () => {},
+      openFieldMenu: () => {},
+      closeFieldMenu: () => {},
+      toggleFieldMenu: () => {},
+      startListeningForField: async () => {},
+      captureImageForField: async () => {},
+      formFieldVersion: 0,
+      trackFormField: () => {},
+      untrackFormField: () => {},
+      getFormFields: () => [],
+    };
   }
   return context;
 }

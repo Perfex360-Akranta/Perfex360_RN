@@ -1,5 +1,3 @@
-// 
-
 import React, { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { useVoiceGuide, GuidedField } from '../../context/VoiceGuideContext';

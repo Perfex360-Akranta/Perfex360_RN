@@ -38,18 +38,23 @@ import { useAppTheme } from '../theme/ThemeContext';
 import ActionPlanCompletion from '../screens/ActionPlan/ActionPlanCompletion';
 import OTGCaptureFormScreen from '../screens/suggestion/OtgCaptureScreen';
 import OtgCaptureModification from '../screens/suggestion/OtgCaptureModification';
+import SettingsScreen from '../screens/settings/SettingsScreen';
+import PCSEntry from '../screens/PCS/PcsEntry';
+import PCSProduction from '../screens/PCS/PcsProduction';
+import PcsLossEntryStandalone from '../screens/PCS/PcsLossEntryStandalone';
 
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   Menu: undefined;
+  Settings: undefined;
   dashboard: undefined;
   AbnForm: undefined;
   AbnView: undefined;
   AbnComp: undefined;
   AbnAllocation: undefined;
 
-  Suggestion: { editRecord?: any, originalId?:string } | undefined;
+  Suggestion: { editRecord?: any, originalId?: string } | undefined;
   SuggestionModification: undefined;
   SuggestionView: undefined;
   SuggestionAcceptReject: undefined;
@@ -66,9 +71,11 @@ export type RootStackParamList = {
   GeneralMaintenanceCompletion: { equipmentNo?: string } | undefined;
   Cltischedule: undefined;
   ActionPlanComp: undefined;
-  OtgCapture:{ editRecord?: any, originalId?:string } |undefined;
-  OtgCaptureModify:undefined;
-
+  OtgCapture: { editRecord?: any, originalId?: string } | undefined;
+  OtgCaptureModify: undefined;
+  PCSEntry: undefined;
+  PCSProduction: undefined;
+  PcsLossEntryStandalone: undefined;
   WorkOrderList: undefined;
 
 
@@ -91,14 +98,14 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator initialRouteName="Login" screenOptions={({ navigation }) => ({
       headerStyle: {
-      backgroundColor: colors.header,
-    },
-    headerTintColor: colors.text,
-    headerTitleStyle: {
-      color: colors.text,
-      fontWeight: '600',
-    },
-    headerShadowVisible: true,
+        backgroundColor: colors.header,
+      },
+      headerTintColor: colors.text,
+      headerTitleStyle: {
+        color: colors.text,
+        fontWeight: '600',
+      },
+      headerShadowVisible: true,
 
       headerRight: () => <AppHeaderSettingsMenu />,
       headerLeft: () => (
@@ -133,7 +140,7 @@ export default function AppNavigator() {
             />
           ),
           // title: 'Perfex360'  , 
-         // headerRight: () => <LogoutButton />,
+          // headerRight: () => <LogoutButton />,
         }}
       />
       <Stack.Screen
@@ -141,14 +148,13 @@ export default function AppNavigator() {
         component={MenuScreen}
         options={({ navigation }) => ({
           title: 'Menu',
-          headerRight: () => null,
           headerLeft: () => (
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <MaterialIcons
                 name="arrow-back"
                 size={28}
-                color="#1511d3"
-                style={{ marginRight: 10, }}
+                color={colors.text}
+                style={{ marginLeft: 10 }}
               />
             </TouchableOpacity>
           ),
@@ -305,15 +311,52 @@ export default function AppNavigator() {
         options={{ title: 'Action Plan Completion' }}
       />
 
-       <Stack.Screen
+      <Stack.Screen
         name="OtgCapture"
         component={OTGCaptureFormScreen}
         options={{ title: 'OTG Capture' }}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="OtgCaptureModify"
         component={OtgCaptureModification}
         options={{ title: 'OTG Capture Modify' }}
+      />
+
+      <Stack.Screen
+        name="PCSEntry"
+        component={PCSEntry}
+        options={{ title: 'PCS Entry' }}
+      />
+
+      <Stack.Screen
+        name="PCSProduction"
+        component={PCSProduction}
+        options={{ title: 'PCS Production' }}
+      />
+
+      <Stack.Screen
+        name="PcsLossEntryStandalone"
+        component={PcsLossEntryStandalone}
+        options={{ title: 'PCS Loss Entry' }}
+      />
+
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={({ navigation }) => ({
+          title: 'Settings',
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{ marginLeft: 10 }}>
+              <MaterialIcons
+                name="arrow-back"
+                size={28}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          ),
+        })}
       />
 
     </Stack.Navigator>

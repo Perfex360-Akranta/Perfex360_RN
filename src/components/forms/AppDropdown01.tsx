@@ -6,12 +6,14 @@ import React, {
   useCallback,
   useId,
   useRef,
+  useContext,
 } from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 
 import {Dropdown} from 'react-native-element-dropdown';
 import {getDropdownData} from '../../services/api/dropdownApi';
 import {useFieldAssist} from '../../context/FieldAssistContext';
+import { NavigationContext } from '@react-navigation/native';
 
 interface DropdownItem {
   label: string;
@@ -40,7 +42,11 @@ const ApiDropdown = forwardRef(({
   onChange,
 }: Props, ref) => {
   const [data, setData] = useState([]);
-  const { registerField, unregisterField } = useFieldAssist();
+  const { registerField, unregisterField, trackFormField, untrackFormField } = useFieldAssist();
+  // Full-form scan: only include dropdowns on the currently focused screen.
+  const navigation = useContext(NavigationContext);
+  const navRef = useRef(navigation);
+  navRef.current = navigation;
   const id = useId();
   const dataRef = useRef<any[]>([]);
   const valueRef = useRef(value);
@@ -58,6 +64,7 @@ const ApiDropdown = forwardRef(({
       id,
       label: label || 'Dropdown',
       type: 'dropdown',
+      isInScope: () => navRef.current?.isFocused?.() ?? true,
       getValue: () => valueRef.current || '',
       setText: val => onChangeRef.current?.(val),
       getOptions: () => dataRef.current,
@@ -66,6 +73,27 @@ const ApiDropdown = forwardRef(({
       },
     });
   }, [disable, id, label, registerField]);
+
+  // Full-form scan: track on mount without changing the active field.
+  useEffect(() => {
+    if (disable) {
+      untrackFormField(id);
+      return;
+    }
+    trackFormField({
+      id,
+      label: label || 'Dropdown',
+      type: 'dropdown',
+      getValue: () => valueRef.current || '',
+      setText: val => onChangeRef.current?.(val),
+      getOptions: () => dataRef.current,
+      onSelectOption: val => {
+        onChangeRef.current?.(val);
+      },
+      isInScope: () => navRef.current?.isFocused?.() ?? true,
+    });
+    return () => untrackFormField(id);
+  }, [disable, id, label, trackFormField, untrackFormField]);
 
   useEffect(() => {
     return () => unregisterField(id);

@@ -29,6 +29,7 @@ import {
   useRegisterVoiceAction,
 } from '../../context/VoiceControlContext';
 import VoiceControlButton from '../../components/assist/VoiceControlButton';
+import FormScanButton from '../../components/assist/FormScanButton';
 // NOTE: spelling must match the real file name (the provider imports 'Voicecommands')
 import { parseSpokenDate } from '../../services/assist/Voicecommands';
 //import FunctionLocationScanner from '../../components/QRscanner/FunctionLocationScanner';
@@ -250,8 +251,11 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
   const [savingFlag, setSavingFlag] = useState<'Y' | 'N' | null>(null);
 
   const onSavePress = (confirmMessage: string, successMessage: string, approvalFlag: 'Y' | 'N') => {
+    // if (!validateForm()) {
+    //     functionalLocationRef.current?.openQrScanner?.();
+    // }
     if (!validateForm()) {
-        functionalLocationRef.current?.openQrScanner?.();
+      return;
     }
 
     Alert.alert(
@@ -423,19 +427,26 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
       result.flid !== currentRole.flid &&
       !editRecord
     ) {
+      // speak('That is not a JH. Please scan a JH QR code');
+      // Alert.alert('JH required', 'Please scan a JH QR code or select a JH in the functional location.');
+      // functionalLocationRef.current?.openQrScanner?.();
       speak('That is not a JH. Please scan a JH QR code');
       Alert.alert('JH required', 'Please scan a JH QR code or select a JH in the functional location.');
-        functionalLocationRef.current?.openQrScanner?.();
+      return;
     }
 
     if (result?.cellId) {
+      // if (jhElementRef.current === result.elementId) {
+      //   functionalLocationRef.current?.openQrScanner?.(); // same JH reported again
+      // }
       if (jhElementRef.current === result.elementId) {
-          functionalLocationRef.current?.openQrScanner?.(); // same JH reported again
+        return; // same JH reported again
       }
       jhElementRef.current = result.elementId;
     } else if (jhElementRef.current) {
       console.log('FL result ignored (no JH), keeping', jhElementRef.current);
-        functionalLocationRef.current?.openQrScanner?.();
+      //functionalLocationRef.current?.openQrScanner?.();
+      return;
     }
 
     console.log('FL result:', result);
@@ -617,7 +628,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   useEffect(() => {
     if (!FOCUS_AUTO_ACTIVATE || !listening) {
-        functionalLocationRef.current?.openQrScanner?.();
+      // functionalLocationRef.current?.openQrScanner?.();
+      return;
     }
     const id = focus.activeId;
     if (id && AUTO_STEPS.includes(id)) {
@@ -673,6 +685,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     aliases: ['functional location', 'location', 'function location', 'functional location panel', 'location panel', 'hierarchy', 'filter'],
     keywords: ['function', 'functional', 'funtion', 'loca', 'location', 'hierarchy', 'panel', 'filter'],
     kind: 'panel',
+    silent: true,
     open: () => {
       setTimeout(() => {
         functionalLocationRef.current?.openFunctionalLocation?.();
@@ -680,7 +693,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     },
     close: () => {
       functionalLocationRef.current?.closeFunctionalLocation();
-      return 'Functional location closed';
+      //return 'Functional location closed';
+
     },
     cancel: () => functionalLocationRef.current?.closeFunctionalLocation(),
     confirm: () => functionalLocationRef.current?.submitFunctionalLocation?.(),
@@ -693,17 +707,15 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
     aliases: ['qr scanner', 'scanner', 'scan qr', 'scan', 'qr code', 'qr', 'qr code scanner', 'open qr scanner', 'open qr code scanner', 'barcode scanner'],
     keywords: ['q r', 'cure', 'queue are', 'skanner', 'scanning', 'barcode'],
     kind: 'panel',
+    silent: true,
     // open: () => functionalLocationRef.current?.openQrScanner(),
     open: () => {
-      setTimeout(() => {
-  
-      }, 150);
-        functionalLocationRef.current?.openQrScanner?.();
-
+      console.log('[QR] voice open qr scanner');
+      functionalLocationRef.current?.openQrScanner?.();
     },
     close: () => {
       functionalLocationRef.current?.closeQrScanner();
-      return 'Scanner closed';
+      // return 'Scanner closed';
     },
     cancel: () => functionalLocationRef.current?.closeQrScanner(),
     confirm: () => 'Point the camera at the QR code',
@@ -826,7 +838,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
 
   const voiceSave = async (approvalFlag: 'Y' | 'N') => {
     if (!validateForm()) {
-        functionalLocationRef.current?.openQrScanner?.();
+      return;
+      //functionalLocationRef.current?.openQrScanner?.();
     }
     await performSave(
       approvalFlag === 'Y' ? 'Suggestion saved and sent to leader' : 'Data saved successfully',
@@ -1040,7 +1053,8 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
                     Alert.alert('Invalid Date', 'Future date not accepted');
                     updateField('date', new Date());
                     setDateResetKey(prev => prev + 1);
-                      functionalLocationRef.current?.openQrScanner?.();
+                    return;
+                    //functionalLocationRef.current?.openQrScanner?.();
                   }
 
                   updateField('date', v);
@@ -1161,6 +1175,7 @@ export default function SuggestionFormScreen({ navigation, route }: any) {
           </FocusHighlight>
         </View>
       )}
+      <FormScanButton />
     </View>
   );
 }

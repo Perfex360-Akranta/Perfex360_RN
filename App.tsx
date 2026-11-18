@@ -6,7 +6,6 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { GridProvider } from './src/context/GridProvider';
 import { FieldAssistProvider } from './src/context/FieldAssistContext';
 import { VoiceGuideProvider } from './src/context/VoiceGuideContext';
-import FieldAssistBar from './src/components/assist/FieldAssistBar';
 //import { enableScreens } from 'react-native-screens';
 import MenuScreen from './src/screens/menu/MenuScreen';
 import { getApiConfig } from './src/utils/ApiConfigStore';
@@ -16,14 +15,14 @@ import { setApiConfig } from './src/context/ApiConfig';
 import { setupAuthInterceptor } from './src/services/axios/authInterceptor';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import { VoiceControlProvider } from './src/context/VoiceControlContext';
+import { FeatureToggleProvider } from './src/context/FeatureToggleContext';
 //enableScreens(true);
 const Drawer = createDrawerNavigator();
 
 
 
 function App() {
-  
-useEffect(() => {
+  useEffect(() => {
     const load = async () => {
       try {
         const config = await getApiConfig();
@@ -53,6 +52,7 @@ useEffect(() => {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
+        <FeatureToggleProvider>
     <GridProvider>
     <FieldAssistProvider>
     <VoiceGuideProvider>
@@ -72,12 +72,11 @@ useEffect(() => {
       </Drawer.Navigator>
       {/* <AppNavigator /> */}
     </NavigationContainer>
-    
-    <FieldAssistBar />
     </VoiceControlProvider>
     </VoiceGuideProvider>
     </FieldAssistProvider>
     </GridProvider>
+        </FeatureToggleProvider>
     </ThemeProvider>
     </SafeAreaProvider>
   );

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { getEquipmentDetailsByNo } from '../../services/api/WorkOrderApi';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 
 export interface EquipmentHeaderProps {
     equipmentNo?: string | null;
@@ -16,6 +17,8 @@ const EquipmentHeader: React.FC<EquipmentHeaderProps> = ({
     title = 'Equipment',
     onEquipmentLoaded,
 }) => {
+    const { isFeatureEnabled } = useFeatureToggles();
+    const qrScannerEnabled = isFeatureEnabled('qrScanner');
     const [equipmentName, setEquipmentName] = useState<string | null>(null);
 
     useEffect(() => {
@@ -47,9 +50,11 @@ const EquipmentHeader: React.FC<EquipmentHeaderProps> = ({
                 </Text>
             </View>
 
-            <TouchableOpacity style={styles.scanButton} onPress={onScanPress}>
-                <MaterialIcons name="qr-code-scanner" size={22} color="#FFFFFF" />
-            </TouchableOpacity>
+            {qrScannerEnabled && (
+                <TouchableOpacity style={styles.scanButton} onPress={onScanPress}>
+                    <MaterialIcons name="qr-code-scanner" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+            )}
         </View>
     );
 };

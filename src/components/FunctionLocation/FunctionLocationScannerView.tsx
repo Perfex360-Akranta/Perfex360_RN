@@ -10,6 +10,7 @@ import FunctionalLocationFilter from './FunctionalLocationFilter';
 import { get } from '../../services/axiosService';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import { useAppTheme } from '../../theme/ThemeContext';
+import { useFeatureToggles } from '../../context/FeatureToggleContext';
 import QrScanner from '../QRscanner/QrScanner';
 
 interface FunctionalLocation {
@@ -73,6 +74,8 @@ const FunctionalLocationScannerView = forwardRef<
   ref,
 ) {
   const { colors } = useAppTheme();
+  const { isFeatureEnabled } = useFeatureToggles();
+  const qrScannerEnabled = isFeatureEnabled('qrScanner');
   const [showFunctionalLocation, setShowFunctionalLocation] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
 
@@ -84,6 +87,7 @@ const FunctionalLocationScannerView = forwardRef<
 
 
   const setScannerVisible = (show: boolean) => {
+    if (show && !qrScannerEnabled) return;
     setShowQrScanner(show);
     onScannerVisibleChange?.(show);
   };
@@ -100,6 +104,7 @@ const FunctionalLocationScannerView = forwardRef<
       setShowFunctionalLocation(true);
     },
     openQrScanner: () => {
+      if (!qrScannerEnabled) return;
       console.log('[FunctionalLocationScannerView] openQrScanner called');
       setShowQrScanner(true);
     },
@@ -222,18 +227,20 @@ const FunctionalLocationScannerView = forwardRef<
           </TouchableOpacity>
         </View>
 
-        <View style={{ flex: 1, alignItems: 'flex-end' }}>
-          <TouchableOpacity
-            style={[styles.scanButton, { backgroundColor: colors.primary }]}
-            onPress={() => setScannerVisible(true)}
-          >
-            <MaterialIcons
-              name="qr-code-scanner"
-              size={20}
-              color={colors.surface}
-            />
-          </TouchableOpacity>
-        </View>
+        {qrScannerEnabled && (
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <TouchableOpacity
+              style={[styles.scanButton, { backgroundColor: colors.primary }]}
+              onPress={() => setScannerVisible(true)}
+            >
+              <MaterialIcons
+                name="qr-code-scanner"
+                size={20}
+                color={colors.surface}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <FunctionalLocationFilter
@@ -248,7 +255,7 @@ const FunctionalLocationScannerView = forwardRef<
       />
 
       <QrScanner
-        visible={showQrScanner}
+        visible={qrScannerEnabled && showQrScanner}
         onScan={handleQrScanned}
         onClose={() => setScannerVisible(false)}
       />

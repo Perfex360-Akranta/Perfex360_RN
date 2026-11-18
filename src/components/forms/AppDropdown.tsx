@@ -7,7 +7,9 @@ import React, {
   useId,
   useRef,
   useMemo,
+  useContext,
 } from 'react';
+import { NavigationContext } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -20,7 +22,6 @@ import {Dropdown} from 'react-native-element-dropdown';
 import {getDropdownData} from '../../services/api/dropdownApi';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
 import {ActiveField, useFieldAssist} from '../../context/FieldAssistContext';
-import FieldAssistAction from '../assist/FieldAssistAction';
 import { useAppTheme } from '../../theme/ThemeContext';
 
 interface DropdownItem {
@@ -111,12 +112,17 @@ const AppDropdown = forwardRef(({
   dataRef.current = data;
   valueRef.current = value;
   onChangeRef.current = onChange;
+  // Full-form scan: only include dropdowns on the currently focused screen.
+  const navigation = useContext(NavigationContext);
+  const navRef = useRef(navigation);
+  navRef.current = navigation;
 
   const field: ActiveField = useMemo(
     () => ({
       id,
       label: label || 'Dropdown',
       type: 'dropdown',
+      isInScope: () => navRef.current?.isFocused?.() ?? true,
       getValue: () => valueRef.current || '',
       setText: val => onChangeRef.current?.(val),
       getOptions: () => dataRef.current,
@@ -255,10 +261,6 @@ const AppDropdown = forwardRef(({
 
           renderRightIcon={() => (
             <View style={styles.rightIcons}>
-
-              {!disable && (
-                <FieldAssistAction field={field} />
-              )}
 
               {value && !disable && (
                 <TouchableOpacity

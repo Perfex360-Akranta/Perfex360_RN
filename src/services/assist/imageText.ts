@@ -1,3 +1,5 @@
+import { readTextFromServer, ServerOcrHints } from './serverOcr';
+
 export type ImageSource = 'camera' | 'library';
 
 function loadPicker() {
@@ -57,7 +59,16 @@ export async function pickImage(source: ImageSource) {
   return result.assets?.[0]?.uri ?? null;
 }
 
-export async function readTextFromImage(uri: string) {
+export async function readTextFromImage(uri: string, hints?: ServerOcrHints) {
+  // Try the server (Gemini) first; any failure silently falls back on-device.
+  const serverText = await readTextFromServer(uri, hints);
+  if (serverText) {
+    return serverText;
+  }
+  return readTextOnDevice(uri);
+}
+
+async function readTextOnDevice(uri: string) {
   const { recognizeText } = loadOcr();
   const result = await recognizeText(uri, { recognitionLevel: 'line' });
   if (result && result.success === false) {

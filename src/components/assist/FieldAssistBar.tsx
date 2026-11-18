@@ -1,14 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useFieldAssist } from '../../context/FieldAssistContext';
 
 /**
  * FieldAssistBar was previously a floating card at the bottom-right of the screen.
- * It has now been replaced with inline WhatsApp-style '+' action controls directly
- * inside fields and dropdowns for a seamless, non-intrusive UI/UX.
- *
- * This component returns null to preserve backwards compatibility with screens
- * that include `<FieldAssistBar />` or `<FieldAssistBar hosted />`.
+ * It has been replaced with inline WhatsApp-style '+' action controls directly
+ * inside fields and dropdowns, and FormScanButton is now a standalone component
+ * imported directly on the screens where it is needed.
  */
-function FieldAssistBar(_props?: { hosted?: boolean }) {
+function FieldAssistBar({
+  hosted,
+}: {
+  hosted?: boolean;
+  hidden?: boolean;
+} = {}) {
+  const { retainHost, releaseHost } = useFieldAssist();
+
+  useEffect(() => {
+    if (!hosted) return;
+    retainHost();
+    return () => releaseHost();
+  }, [hosted, retainHost, releaseHost]);
+
   return null;
 }
 

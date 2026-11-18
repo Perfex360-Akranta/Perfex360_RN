@@ -794,6 +794,7 @@ import { NavigationContext } from '@react-navigation/native';
 import Voice from '@dev-amirzubair/react-native-voice';
 import { speak, onSpeechLifecycle } from '../services/assist/voiceGuide';
 import { useVoiceGuide } from './VoiceGuideContext';
+import { useFeatureToggles } from './FeatureToggleContext';
 
 
 import {
@@ -827,6 +828,7 @@ export type VoiceControlDef = {
     cancel?: () => void;
     confirm?: () => void | string; // "ok" applies the panel's selection
     isOpen?: () => boolean;
+    silent?: boolean;
     getOptions?: () => Option[];
     select?: (value: string) => void;
     // text
@@ -897,6 +899,8 @@ function pickCandidate(heard: string, candidates: Option[]): Option | null {
 }
 
 export function VoiceControlProvider({ children }: { children: React.ReactNode }) {
+    const { isFeatureEnabled } = useFeatureToggles();
+    const voiceControlEnabled = isFeatureEnabled('voiceControl');
     const { stopGuidance } = useVoiceGuide();
 
     const [listening, setListening] = useState(false);
@@ -1087,6 +1091,9 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
     }, []);
 
     const startListening = useCallback(async () => {
+        if (!voiceControlEnabled) {
+            return;
+        }
         if (sessionRef.current) {
             return;
         }
@@ -1106,7 +1113,14 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
         introRef.current = false;
         scheduleRestart(300);
         flushActivateRef.current();
-    }, [stopGuidance, scheduleRestart]);
+    }, [voiceControlEnabled, stopGuidance, scheduleRestart]);
+
+    // Automatically abort active listening session when voice control is toggled OFF
+    useEffect(() => {
+        if (!voiceControlEnabled && sessionRef.current) {
+            stopListening(true);
+        }
+    }, [voiceControlEnabled, stopListening]);
 
     // Turn off when the app goes to the background; clean up on unmount
     useEffect(() => {
@@ -1188,7 +1202,7 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 ctl.open?.();
                 modeRef.current = { type: 'command' };
                 activeIdRef.current = null;
-                return `Opening ${ctl.label}`;
+                return ctl.silent ? '' : `Opening ${ctl.label}`;
             default:
                 modeRef.current = { type: 'command' };
                 activeIdRef.current = null;
@@ -1327,6 +1341,10 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 }
                 modeRef.current = { type: 'command' };
                 pendingRef.current = null;
+                // return typeof message === 'string' ? message : `Closed ${ctl.label}`;
+                if (ctl.silent) {
+                    return null;
+                }
                 return typeof message === 'string' ? message : `Closed ${ctl.label}`;
             }
             case 'clear': {
@@ -1394,6 +1412,10 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
                 activeIdRef.current = null;
                 modeRef.current = { type: 'command' };
                 pendingRef.current = null;
+                // return ctl.kind === 'panel' ? `${ctl.label} cancelled` : `Closed ${ctl.label}`;
+                if (ctl.silent) {
+                    return null;
+                }
                 return ctl.kind === 'panel' ? `${ctl.label} cancelled` : `Closed ${ctl.label}`;
             }
             case 'help':
@@ -1454,7 +1476,9 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
             try {
                 const message = activate(ctl);
                 syncActiveControl();
-                await say(message);
+                if (message) {
+                    await say(message);
+                }
             } catch (error) {
                 console.warn('[VoiceControl] auto-activate failed:', error);
             } finally {
@@ -1529,7 +1553,18 @@ export function VoiceControlProvider({ children }: { children: React.ReactNode }
 export function useVoiceControl() {
     const ctx = useContext(VoiceControlContext);
     if (!ctx) {
-        throw new Error('useVoiceControl must be used within VoiceControlProvider');
+        return {
+            listening: false,
+            lastHeard: '',
+            activeControlId: null,
+            activateControl: () => {},
+            startListening: async () => {},
+            stopListening: async () => {},
+            registerControl: () => {},
+            unregisterControl: () => {},
+            registerAction: () => {},
+            unregisterAction: () => {},
+        };
     }
     return ctx;
 }
