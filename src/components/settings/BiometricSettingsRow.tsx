@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   StyleSheet,
   Switch,
   Text,
@@ -16,12 +17,17 @@ import { login } from '../../services/api/authApi';
 import { getToken } from '../../services/storage/tokenStorage';
 import { getUser } from '../../services/storage/userStorage';
 import {
+  BIOMETRIC_FACE_ENABLED,
   BIOMETRIC_FEATURE_ENABLED,
+  BiometricMethod,
   clearBiometricData,
   getActiveBiometricUsername,
+  getBiometricMethod,
   getSupportedBiometry,
   isBiometricLoginAvailable,
   saveBiometricCredentials,
+  setBiometricMethod,
+  switchBiometricMethod,
 } from '../../services/auth/biometricService';
 
 export default function BiometricSettingsRow() {
@@ -29,7 +35,13 @@ export default function BiometricSettingsRow() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeUsername, setActiveUsername] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [activeMethod, setActiveMethod] =
+    useState<BiometricMethod>('fingerprint');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'enable' | 'switch'>('enable');
+  const [pendingMethod, setPendingMethod] = useState<BiometricMethod | null>(
+    null,
+  );
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verifyingPassword, setVerifyingPassword] = useState(false);
   const [modalError, setModalError] = useState('');
@@ -63,6 +75,22 @@ export default function BiometricSettingsRow() {
           user?.userName ||
           '';
 
+        if (Platform.OS === 'android' && BIOMETRIC_FACE_ENABLED) {
+          const [available, method] = await Promise.all([
+            isBiometricLoginAvailable(),
+            getBiometricMethod(),
+          ]);
+          if (!isMounted) {
+            return;
+          }
+
+          setActiveUsername(resolvedUsername);
+          setBiometricEnabled(available);
+          setActiveMethod(method);
+          setIsAuthenticated(true);
+          return;
+        }
+
         const available = await isBiometricLoginAvailable();
         if (!isMounted) {
           return;
@@ -89,7 +117,14 @@ export default function BiometricSettingsRow() {
     return null;
   }
 
-  const handleToggle = async (nextValue: boolean) => {
+  const showDualToggles =
+    Platform.OS === 'android' && BIOMETRIC_FACE_ENABLED;
+  const isFingerprintEnabled =
+    biometricEnabled && (!showDualToggles || activeMethod === 'fingerprint');
+  const isFaceEnabled =
+    showDualToggles && biometricEnabled && activeMethod === 'face';
+
+  const handleFingerprintToggle = async (nextValue: boolean) => {
     if (verifyingPassword || confirmInFlightRef.current) {
       return;
     }
@@ -97,9 +132,35 @@ export default function BiometricSettingsRow() {
     if (!nextValue) {
       await clearBiometricData();
       setBiometricEnabled(false);
+      setActiveMethod('fingerprint');
       return;
     }
 
+    setModalMode(
+      biometricEnabled && activeMethod === 'face' ? 'switch' : 'enable',
+    );
+    setPendingMethod('fingerprint');
+    setConfirmPassword('');
+    setModalError('');
+    setShowPasswordModal(true);
+  };
+
+  const handleFaceToggle = async (nextValue: boolean) => {
+    if (!showDualToggles || verifyingPassword || confirmInFlightRef.current) {
+      return;
+    }
+
+    if (!nextValue) {
+      await clearBiometricData();
+      setBiometricEnabled(false);
+      setActiveMethod('fingerprint');
+      return;
+    }
+
+    setModalMode(
+      biometricEnabled && activeMethod === 'fingerprint' ? 'switch' : 'enable',
+    );
+    setPendingMethod('face');
     setConfirmPassword('');
     setModalError('');
     setShowPasswordModal(true);
@@ -110,6 +171,8 @@ export default function BiometricSettingsRow() {
       return;
     }
     setShowPasswordModal(false);
+    setModalMode('enable');
+    setPendingMethod(null);
     setConfirmPassword('');
     setModalError('');
   };
@@ -148,10 +211,90 @@ export default function BiometricSettingsRow() {
         return;
       }
 
+      const targetMethod: BiometricMethod = pendingMethod ?? 'fingerprint';
+
+      if (targetMethod === 'face') {
+        const faceResult = await switchBiometricMethod(
+          'face',
+          activeUsername,
+          confirmPassword,
+          { skipPasswordVerification: true },
+        );
+
+        if (!faceResult.ok) {
+          if (faceResult.status === 'unavailable') {
+            setShowPasswordModal(false);
+            setConfirmPassword('');
+            setPendingMethod(null);
+            setModalMode('enable');
+            Alert.alert(
+              'Biometrics Unavailable',
+              faceResult.message ||
+                'Face recognition is unavailable on this device',
+            );
+            return;
+          }
+
+          setModalError(
+            faceResult.message ||
+              'Biometric authentication was cancelled or failed.',
+          );
+          return;
+        }
+
+        setActiveMethod('face');
+        setBiometricEnabled(true);
+        setShowPasswordModal(false);
+        setConfirmPassword('');
+        setPendingMethod(null);
+        setModalMode('enable');
+        Alert.alert('Success', 'Face recognition login enabled');
+        return;
+      }
+
+      if (modalMode === 'switch') {
+        const switchResult = await switchBiometricMethod(
+          'fingerprint',
+          activeUsername,
+          confirmPassword,
+          { skipPasswordVerification: true },
+        );
+
+        if (!switchResult.ok) {
+          if (switchResult.status === 'unavailable') {
+            setShowPasswordModal(false);
+            setConfirmPassword('');
+            setPendingMethod(null);
+            setModalMode('enable');
+            Alert.alert(
+              'Biometrics Unavailable',
+              switchResult.message || 'No biometrics enrolled on this device',
+            );
+            return;
+          }
+
+          setModalError(
+            switchResult.message ||
+              'Biometric authentication was cancelled or failed.',
+          );
+          return;
+        }
+
+        setActiveMethod('fingerprint');
+        setBiometricEnabled(true);
+        setShowPasswordModal(false);
+        setConfirmPassword('');
+        setPendingMethod(null);
+        setModalMode('enable');
+        Alert.alert('Success', 'Fingerprint login enabled');
+        return;
+      }
+
       const biometryType = await getSupportedBiometry();
       if (biometryType === null) {
         setShowPasswordModal(false);
         setConfirmPassword('');
+        setPendingMethod(null);
         setBiometricEnabled(false);
         Alert.alert(
           'Biometrics Unavailable',
@@ -170,15 +313,36 @@ export default function BiometricSettingsRow() {
         return;
       }
 
+      if (showDualToggles) {
+        await setBiometricMethod('fingerprint');
+      }
+      setActiveMethod('fingerprint');
       setBiometricEnabled(true);
       setShowPasswordModal(false);
       setConfirmPassword('');
+      setPendingMethod(null);
       Alert.alert('Success', 'Biometric login enabled');
     } finally {
       confirmInFlightRef.current = false;
       setVerifyingPassword(false);
     }
   };
+
+  const fingerprintTitle = showDualToggles
+    ? 'Biometric Login (Fingerprint)'
+    : 'Biometric Login';
+  const fingerprintDescription = showDualToggles
+    ? 'Use Fingerprint to sign in'
+    : 'Use Fingerprint or Face ID to sign in';
+
+  const modalSubtitle =
+    modalMode === 'switch' && pendingMethod === 'face'
+      ? 'Re-enter your password to switch to Face Recognition.'
+      : modalMode === 'switch' && pendingMethod === 'fingerprint'
+      ? 'Re-enter your password to switch to Fingerprint.'
+      : pendingMethod === 'face'
+      ? 'Re-enter your password to enable Face Recognition.'
+      : 'Re-enter your password to enable biometric login.';
 
   return (
     <>
@@ -200,7 +364,7 @@ export default function BiometricSettingsRow() {
             style={[
               styles.iconBox,
               {
-                backgroundColor: biometricEnabled
+                backgroundColor: isFingerprintEnabled
                   ? colors.primaryLight
                   : colors.surfaceSecondary,
               },
@@ -209,7 +373,9 @@ export default function BiometricSettingsRow() {
             <MaterialIcons
               name="fingerprint"
               size={22}
-              color={biometricEnabled ? colors.primary : colors.iconSecondary}
+              color={
+                isFingerprintEnabled ? colors.primary : colors.iconSecondary
+              }
             />
           </View>
 
@@ -219,16 +385,16 @@ export default function BiometricSettingsRow() {
                 style={[
                   styles.title,
                   { color: colors.text },
-                  !biometricEnabled && styles.dimmedText,
+                  !isFingerprintEnabled && styles.dimmedText,
                 ]}
               >
-                Biometric Login
+                {fingerprintTitle}
               </Text>
               <View
                 style={[
                   styles.statusPill,
                   {
-                    backgroundColor: biometricEnabled
+                    backgroundColor: isFingerprintEnabled
                       ? colors.successBackground
                       : colors.disabled,
                   },
@@ -238,13 +404,13 @@ export default function BiometricSettingsRow() {
                   style={[
                     styles.statusText,
                     {
-                      color: biometricEnabled
+                      color: isFingerprintEnabled
                         ? colors.success
                         : colors.textSecondary,
                     },
                   ]}
                 >
-                  {biometricEnabled ? 'ON' : 'OFF'}
+                  {isFingerprintEnabled ? 'ON' : 'OFF'}
                 </Text>
               </View>
             </View>
@@ -252,27 +418,113 @@ export default function BiometricSettingsRow() {
               style={[
                 styles.description,
                 { color: colors.textSecondary },
-                !biometricEnabled && styles.dimmedText,
+                !isFingerprintEnabled && styles.dimmedText,
               ]}
             >
-              Use Fingerprint or Face ID to sign in
+              {fingerprintDescription}
             </Text>
           </View>
 
           <Switch
-            value={biometricEnabled}
-            onValueChange={handleToggle}
+            value={isFingerprintEnabled}
+            onValueChange={handleFingerprintToggle}
             trackColor={{
               false: colors.border,
               true: colors.primary,
             }}
-            thumbColor={biometricEnabled ? '#FFFFFF' : '#F4F4F4'}
+            thumbColor={isFingerprintEnabled ? '#FFFFFF' : '#F4F4F4'}
             accessibilityRole="switch"
             accessibilityLabel="Toggle Biometric Login"
-            accessibilityState={{ checked: biometricEnabled }}
+            accessibilityState={{ checked: isFingerprintEnabled }}
             testID="biometric-login-switch"
           />
         </View>
+
+        {showDualToggles ? (
+          <>
+            <View
+              style={[styles.rowDivider, { backgroundColor: colors.border }]}
+            />
+            <View style={styles.row}>
+              <View
+                style={[
+                  styles.iconBox,
+                  {
+                    backgroundColor: isFaceEnabled
+                      ? colors.primaryLight
+                      : colors.surfaceSecondary,
+                  },
+                ]}
+              >
+                <MaterialIcons
+                  name="face"
+                  size={22}
+                  color={isFaceEnabled ? colors.primary : colors.iconSecondary}
+                />
+              </View>
+
+              <View style={styles.info}>
+                <View style={styles.titleLine}>
+                  <Text
+                    style={[
+                      styles.title,
+                      { color: colors.text },
+                      !isFaceEnabled && styles.dimmedText,
+                    ]}
+                  >
+                    Face Recognition
+                  </Text>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      {
+                        backgroundColor: isFaceEnabled
+                          ? colors.successBackground
+                          : colors.disabled,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        {
+                          color: isFaceEnabled
+                            ? colors.success
+                            : colors.textSecondary,
+                        },
+                      ]}
+                    >
+                      {isFaceEnabled ? 'ON' : 'OFF'}
+                    </Text>
+                  </View>
+                </View>
+                <Text
+                  style={[
+                    styles.description,
+                    { color: colors.textSecondary },
+                    !isFaceEnabled && styles.dimmedText,
+                  ]}
+                >
+                  Use Face Recognition to sign in
+                </Text>
+              </View>
+
+              <Switch
+                value={isFaceEnabled}
+                onValueChange={handleFaceToggle}
+                trackColor={{
+                  false: colors.border,
+                  true: colors.primary,
+                }}
+                thumbColor={isFaceEnabled ? '#FFFFFF' : '#F4F4F4'}
+                accessibilityRole="switch"
+                accessibilityLabel="Toggle Face Recognition"
+                accessibilityState={{ checked: isFaceEnabled }}
+                testID="biometric-face-switch"
+              />
+            </View>
+          </>
+        ) : null}
       </View>
 
       <Modal
@@ -297,7 +549,7 @@ export default function BiometricSettingsRow() {
             <Text
               style={[styles.modalSubtitle, { color: colors.textSecondary }]}
             >
-              Re-enter your password to enable biometric login.
+              {modalSubtitle}
             </Text>
 
             <TextInput
@@ -421,6 +673,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 3,
     lineHeight: 16,
+  },
+  rowDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 68,
   },
   modalOverlay: {
     flex: 1,

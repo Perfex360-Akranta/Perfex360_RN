@@ -7,7 +7,7 @@ import {
   Image,
   ImageBackground,
   StyleSheet,
-  SafeAreaView,
+  Platform,
   StatusBar,
   Alert,
   ActivityIndicator,
@@ -21,8 +21,12 @@ import { useGrid } from '../../context/GridProvider';
 import { useFieldAssist } from '../../context/FieldAssistContext';
 import { useAppTheme } from '../../theme/ThemeContext';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  BIOMETRIC_FACE_ENABLED,
   BIOMETRIC_FEATURE_ENABLED,
+  BIOMETRIC_METHOD_KEY,
+  BiometricMethod,
   clearBiometricData,
   isBiometricLoginAvailable,
   isInvalidCredentialsError,
@@ -36,9 +40,11 @@ const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
 const [showServerModal, setShowServerModal] = useState(false);
   const [showBiometricButton, setShowBiometricButton] = useState(false);
+  const [biometricMethod, setBiometricMethod] =
+    useState<BiometricMethod | null>(null);
   const [biometricLoading, setBiometricLoading] = useState(false);
   const loginInFlightRef = useRef(false);
-const { colors, themeMode, setThemeMode } = useAppTheme();
+const { colors } = useAppTheme();
 const { setCurrentUser, setCurrentRole} = useGrid();
 const { closeAssist } = useFieldAssist();
 
@@ -58,9 +64,32 @@ useEffect(() => {
       }
 
       const available = await isBiometricLoginAvailable();
-      if (isMounted) {
-        setShowBiometricButton(available);
+      if (!isMounted) {
+        return;
       }
+
+      if (available && BIOMETRIC_FACE_ENABLED && Platform.OS === 'android') {
+        let storedMethod: string | null = null;
+        try {
+          storedMethod = await AsyncStorage.getItem(BIOMETRIC_METHOD_KEY);
+        } catch {
+          storedMethod = null;
+        }
+        if (!isMounted) {
+          return;
+        }
+        setBiometricMethod(
+          storedMethod === 'face'
+            ? 'face'
+            : storedMethod === 'fingerprint'
+            ? 'fingerprint'
+            : null,
+        );
+      } else {
+        setBiometricMethod(null);
+      }
+
+      setShowBiometricButton(available);
     };
 
     checkBiometricAvailability();
@@ -184,6 +213,20 @@ useEffect(() => {
     };
 
 
+  const useMethodSpecificBiometricLabel =
+    BIOMETRIC_FACE_ENABLED &&
+    Platform.OS === 'android' &&
+    biometricMethod !== null;
+  const biometricIconName =
+    useMethodSpecificBiometricLabel && biometricMethod === 'face'
+      ? 'face'
+      : 'fingerprint';
+  const biometricButtonLabel = useMethodSpecificBiometricLabel
+    ? biometricMethod === 'face'
+      ? 'Login with Face Recognition'
+      : 'Login with Fingerprint'
+    : 'Login with Fingerprint / Face ID';
+
   const onLogoPress =  () => {
     if(password == 'Akr'){
       setShowServerModal(true);
@@ -287,13 +330,13 @@ useEffect(() => {
                 ) : (
                   <View style={styles.biometricContent}>
                     <MaterialIcons
-                      name="fingerprint"
+                      name={biometricIconName}
                       size={20}
                       color={colors.primary}
                     />
                     <Text
                       style={[styles.biometricText, { color: colors.primary }]}>
-                      Login with Fingerprint / Face ID
+                      {biometricButtonLabel}
                     </Text>
                   </View>
                 )}
